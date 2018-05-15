@@ -14,14 +14,17 @@ is_empty = false
 current_pressure = 0
 passed_time = 0
 command_motor_speed = PREDEFINED_MOTOR_SPEED
-command_mode = 1 'getValue(_VAR,10)
-desired_pressure = 3300 'to be modified
+
+'bouton pause ta race
 
 '###############################################################################
 
 ' ##### Initialisation of the Sprayer Module. #####
 
 init :
+
+	do until getValue(_VAR, 10) = 0
+	loop
 
 	print ("----- INITIALISATION OF SPRAYER MODULE -----\r")
 	print ("----- MOTOR WILL START TO SEE IF TANK IS FILLED -----\r")
