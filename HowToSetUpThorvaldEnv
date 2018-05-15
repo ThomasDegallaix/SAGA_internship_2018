@@ -1,0 +1,21 @@
+###Follow this guide: (change xx in the last line by *)###
+https://www.nmbu.no/en/faculty/realtek/research/groups/roboticsandcontrol/thorvaldinstall/node/34632
+
+roslaunch thorvald_bringup thorvald_ii_4wd2ws_tora_sim.launch 
+
+###Via Gazebo###
+
+=> rosrun gazebo_ros spawn_model -model -param robot_description -urdf
+	
+roslaunch gazebo_ros empty_world.launch
+
+
+rostopic pub -r 10 /twist_mux/cmd_vel geometry_msgs/Twist "linear:
+  x: 0.2
+  y: 0.0
+  z: 0.0
+angular:
+  x: 0.0
+  y: 0.0
+  z: 0.4" 
+

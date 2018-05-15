@@ -1,0 +1,40 @@
+- The motor controller script given here is exactly the same that is uploaded on the motor controller. TPDO1 is set on 40ms, autoscripting enabled.
+
+- Due to a design mistake, the circuit board's pins to connect to the motor controller are inverted, the problem can be avoided by inverting the female PCB connector, placing it on the circuit board's bottom; and by twisting 180° the ribbon flat cable.
+Also, the pins 4 and 5 of the INA122 (see joined datasheet) shall be connected to ground, on the circuit board the design made connect only the 5th pin to ground. The problem has been avoided by soldering a resistor's cutted metal between the two pins under the circuit board.
+
+-You'll find all the ROS code on the robot, all modifications had been enclosed by:
+
+//PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// EDIT Author: Pierre Pezelet E-mail: pierre.pezelet@hotmail.com
+// PURPOSE: Spraying module integration - Aug 2017
+
+   *CODE*
+
+// END EDIT
+//PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+
+Added package:
+- ~/catkin_ws/src/sprayer_driver
+
+Added files:
+- ~/catkin_ws/src/can_devices/common/src/RoboteqSdc2130S.cpp
+- ~/catkin_ws/src/can_devices/common/include/RoboteqSdc2130S.h
+
+Modified files:
+- ~/catkin_ws/src/base_driver/common/src/CanCtrlPltf.cpp
+- ~/catkin_ws/src/base_driver/common/include/CanCtrlPltf.h
+- ~/catkin_ws/src/base_driver/ros/src/thorvald_base_drive_chain.cpp
+- ~/catkin_ws/src/teleop_xbox/src/teleop_xbox.cpp
+
+TODO: Cleaning the code + further developpement on the motor controller feedback (temperature, communication flag, ect...) for now it is supposed that the motor controller is always OK.
+
+-About the mechanics:
+Verify that the pump's screws aren't loosens after a run in the field.
+When I left I didn't tighten these screws be sure to do it.
+To take the module off the robot: 
+Unplug the metal connector, pull the black connector, and lift the module away. Reverse process to mount it.
+
+-About the Kicad project name, I'm conscious now of what cardboard means, and of the spelling mistake on sprayer, but for a time saving and kicad project integrity purposes, I prefered not changing the name!
+
+If think that's all you need to know; enjoy the sprayer and if you need anything don't hesitate to contact me on messenger or pierre.pezelet@isen.yncrea.fr :)

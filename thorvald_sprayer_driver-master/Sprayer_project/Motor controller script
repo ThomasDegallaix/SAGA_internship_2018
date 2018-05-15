@@ -1,0 +1,77 @@
+motor = 700
+consigne = 3625
+toReach = 3300
+empty = 0
+initTime = 0
+initTimout = 1500 '15sec
+
+init:
+
+wait(50)
+print("INIT \r")
+motor = 700
+ai = getvalue(_AI,3)
+cmd = getvalue(_VAR,10)
+tankRefillTrigger = getvalue(_VAR,12)
+
+if cmd = 1 then
+
+if empty = 1 then
+if tankRefillTrigger = 1 then
+setcommand(_VAR,2,2)
+empty = 0
+end if
+goto init
+end if
+
+if initTime > initTimout then
+setcommand(_VAR,2,4)
+empty = 1
+setcommand(_G,1,0)
+initTime = 0
+goto init
+end if
+
+if toReach > ai then
+setcommand(_VAR,2,2)
+initTime = initTime + 5
+setcommand(_G,1,1200)
+goto init
+end if
+
+else
+initTime = 0
+setcommand(_VAR,2,1)
+goto init
+end if
+
+run:
+initTime = 0
+ai = getvalue(_AI,3)
+cmd = getvalue(_VAR,10)
+
+print("Analog input 3: ",ai,"\r")
+
+if cmd = 1 then
+if motor < 900 then
+if ai < consigne then
+motor = motor + 2
+else
+motor = motor -2
+end if
+setcommand(_VAR,2,3)
+setcommand(_G,1,motor)
+else
+setcommand(_VAR,2,4)
+empty = 1
+setcommand(_G,1,0)
+goto init
+end if
+else
+setcommand(_VAR,2,1)
+setcommand(_G,1,0)
+end if
+
+print("Motor: ", motor, "\r")
+wait(50)
+Goto run
