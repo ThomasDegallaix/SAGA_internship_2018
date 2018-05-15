@@ -1,0 +1,107 @@
+'###############################################################################
+
+' ##### Definition of usefull constants. ######
+
+PREDEFINED_MOTOR_SPEED = 800 ' Rpm
+PREDEFINED_PRESSURE = 3650 ' hPa
+TIMEOUT_7S = 7000 ' ms
+TIMEOUT_5S = 5000 ' ms
+
+' ##### Definition of usefull variables. #####
+
+dim is_empty as Boolean
+is_empty = false
+current_pressure = 0
+passed_time = 0
+command_motor_speed = PREDEFINED_MOTOR_SPEED
+command_mode = getValue(_VAL,10)
+
+'###############################################################################
+
+' ##### Initialisation of the Sprayer Module. #####
+
+init :
+
+	print ("----- INITIALISATION OF SPRAYER MODULE -----\r")
+	print ("----- MOTOR WILL START TO SEE IF TANK IS FILLED -----\r")
+	print ("----- PLEASE MOVE AWAY FROM SPRAYER -----\r")
+
+	wait (5000)
+
+	if not is_empty then
+		gosub init_timer_5s ' Set a timer for 5 secondes.
+		do until getTimerState(0) = 1 ' Will actuate the pressure while pump is working.
+			setCommand(_G, 1, command_motor_speed)
+			gosub actuate_pressure
+		loop
+		gosub test_pressure
+		gosub tank_refilled
+		goto init ' Go to the initialisation routine.
+	end if
+
+'###############################################################################
+
+'##### Main program that will be run after the initialisation.
+
+run:
+
+	if cammand_mode = 1 then
+		while command_mode = 1
+			setCommand(_G, 1, command_motor_speed)
+			gosub init_timer_5s
+			init_timer_5s
+			if getTimerState(0) = 1 then
+				gosub print_pressure
+				gosub test_pressure
+			end if
+		end while
+	end if
+
+	goto run
+
+
+'###############################################################################
+
+'##### Usable Subroutines #####
+
+tank_refilled :
+	command_motor_speed = 1500
+	init_timer_5s
+	do until getTimerState(1) = 1
+		setCommand(_G, 1, command_motor_speed)
+	loop
+	command_motor_speed = PREDEFINED_MOTOR_SPEED
+	return
+
+actuate_pressure :
+	current_pressure = getValue(_AI, 3)
+	return
+
+test_pressure:
+	if current_pressure < 3000 then ' Verify if the pressure is correct if not set is_empty to true.
+		is_empty = true
+	end if
+	if is_empty then
+		print ("----- THE TANK IS PROPBABLY EMPTY -----\r") ' Display in the console log that the tank is empty.
+		print ("----- PLEASE REFILL AND RE-INITIALISE -----\r")
+		do until getValue(_VAR, 10) = 0 ' Wait for command 1 to come.
+		loop
+		is_empty = false ' Set is_empty to false to pass an other time the initialisation.
+	end if
+	return
+
+print_pressure:
+	if
+	if getTimerState(0) = 1 then
+		print ("Analog value recieved for pressure is : ", getValue(_AI, 3), "\r")
+		init_timer_5s
+	end if
+	return
+
+init_timer_7s :
+	setTimerCount(1, TIMEOUT_7S)
+	return
+
+init_timer_5s:
+	setTimerCount(0, TIMEOUT_5S)
+	return
