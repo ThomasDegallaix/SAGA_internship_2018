@@ -14,6 +14,7 @@ is_empty = false
 current_pressure = 0
 passed_time = 0
 command_motor_speed = PREDEFINED_MOTOR_SPEED
+command_mode = 1
 
 'bouton pause ta race
 
@@ -23,7 +24,7 @@ command_motor_speed = PREDEFINED_MOTOR_SPEED
 
 init :
 
-	do until getValue(_VAR, 10) = 0
+	do until getValue(_VAR, 10) = 1
 	loop
 
 	print ("----- INITIALISATION OF SPRAYER MODULE -----\r")
@@ -36,7 +37,7 @@ init :
 		gosub init_timer_5s ' Set a timer for 5 secondes.
 		do until getTimerState(0) = 1 ' Will actuate the pressure while pump is working.
 			setCommand(_G, 1, command_motor_speed)
-			gosub actuate_pressure
+			current_pressure = getValue(_AI, 3)
 		loop
 		gosub test_pressure
 	end if
@@ -51,7 +52,7 @@ run:
 		gosub init_timer_5s
 		while command_mode = 1
 			setCommand(_G, 1, command_motor_speed)
-			gosub actuate_pressure
+			current_pressure = getValue(_AI, 3)
 			gosub pressure_enslavement
 			gosub print_pressure
 		end while
@@ -71,10 +72,6 @@ tank_refilled :
 		setCommand(_G, 1, command_motor_speed)
 	loop
 	command_motor_speed = PREDEFINED_MOTOR_SPEED
-	return
-
-actuate_pressure :
-	current_pressure = getValue(_AI, 3)
 	return
 
 test_pressure:
@@ -107,9 +104,9 @@ init_timer_7s :
 init_timer_5s:
 	setTimerCount(0, TIMEOUT_5S)
 	return
-	
+
 pressure_enslavement:
-	gosub actuate_pressure
+	current_pressure = getValue(_AI, 3)
 	gosub test_pressure
 	if current_pressure < PREDEFINED_PRESSURE then
 		do until current_pressure < PREDEFINED_PRESSURE
