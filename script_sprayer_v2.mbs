@@ -35,8 +35,6 @@ init :
 			gosub actuate_pressure
 		loop
 		gosub test_pressure
-		gosub tank_refilled
-		goto init ' Go to the initialisation routine.
 	end if
 
 '###############################################################################
@@ -67,7 +65,7 @@ run:
 tank_refilled :
 	command_motor_speed = 1500
 	init_timer_5s
-	do until getTimerState(1) = 1
+	do until getTimerState(0) = 1
 		setCommand(_G, 1, command_motor_speed)
 	loop
 	command_motor_speed = PREDEFINED_MOTOR_SPEED
@@ -87,6 +85,8 @@ test_pressure:
 		do until getValue(_VAR, 10) = 0 ' Wait for command 1 to come.
 		loop
 		is_empty = false ' Set is_empty to false to pass an other time the initialisation.
+		gosub tank_refilled
+		goto init
 	end if
 	return
 
