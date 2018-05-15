@@ -14,7 +14,8 @@ is_empty = false
 current_pressure = 0
 passed_time = 0
 command_motor_speed = PREDEFINED_MOTOR_SPEED
-command_mode = getValue(_VAL,10)
+command_mode = 1 'getValue(_VAR,10)
+desired_pressure = 3300 'to be modified
 
 '###############################################################################
 
@@ -43,15 +44,13 @@ init :
 
 run:
 
-	if cammand_mode = 1 then
+	if command_mode = 1 then
+		gosub init_timer_5s
 		while command_mode = 1
 			setCommand(_G, 1, command_motor_speed)
-			gosub init_timer_5s
-			init_timer_5s
-			if getTimerState(0) = 1 then
-				gosub print_pressure
-				gosub test_pressure
-			end if
+			gosub actuate_pressure
+			gosub pressure_enslavement
+			gosub print_pressure
 		end while
 	end if
 
@@ -64,7 +63,7 @@ run:
 
 tank_refilled :
 	command_motor_speed = 1500
-	init_timer_5s
+	gosub init_timer_5s
 	do until getTimerState(0) = 1
 		setCommand(_G, 1, command_motor_speed)
 	loop
@@ -76,14 +75,15 @@ actuate_pressure :
 	return
 
 test_pressure:
-	if current_pressure < 3000 then ' Verify if the pressure is correct if not set is_empty to true.
+	if current_pressure < 2500 then ' Verify if the pressure is correct if not set is_empty to true.
 		is_empty = true
 	end if
 	if is_empty then
 		print ("----- THE TANK IS PROPBABLY EMPTY -----\r") ' Display in the console log that the tank is empty.
 		print ("----- PLEASE REFILL AND RE-INITIALISE -----\r")
-		do until getValue(_VAR, 10) = 0 ' Wait for command 1 to come.
-		loop
+		'do until getValue(_VAR, 10) = 0 ' Wait for command 1 to come.
+		'loop
+		wait (3000)
 		is_empty = false ' Set is_empty to false to pass an other time the initialisation.
 		gosub tank_refilled
 		goto init
@@ -91,10 +91,9 @@ test_pressure:
 	return
 
 print_pressure:
-	if
 	if getTimerState(0) = 1 then
-		print ("Analog value recieved for pressure is : ", getValue(_AI, 3), "\r")
-		init_timer_5s
+		print ("Analog value received for pressure is : ", getValue(_AI, 3), "\r")
+		gosub init_timer_5s
 	end if
 	return
 
@@ -104,4 +103,18 @@ init_timer_7s :
 
 init_timer_5s:
 	setTimerCount(0, TIMEOUT_5S)
+	return
+	
+pressure_enslavement:
+	gosub actuate_pressure
+	gosub test_pressure
+	if current_pressure < PREDEFINED_PRESSURE then
+		do until current_pressure < PREDEFINED_PRESSURE
+			command_motor_speed ++
+		loop
+	elseif current_pressure >= PREDEFINED_PRESSURE then
+		do until current_pressure >= PREDEFINED_PRESSURE
+			command_motor_speed --
+		loop
+	end if
 	return
