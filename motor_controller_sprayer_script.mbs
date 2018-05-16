@@ -1,0 +1,88 @@
+'###############################################################################
+
+'##### @title: motor_controller_sprayer_script #########################################
+'##### @version: 1.1.0 ############################################################
+'##### @author: Antoine Bedhome ##################################################
+'##### @license: MIT #############################################################
+
+'###############################################################################
+
+'##### Creation of usefull constants ##################################################
+
+PREDEFINED_MOTOR_SPEED = 800 ' Rpm
+PREDEFINED_PRESSURE = 2500 ' hPa
+
+'##### Creation of usefull variables ##################################################
+
+dim is_empty as Boolean
+is_empty = false
+command_motor_speed = PREDEFINED_MOTOR_SPEED
+current_command = 0
+old_command = 0
+stop_state = 0
+
+'##### Creation of usefull subroutines ################################################
+
+actuate_pressure:
+     current_pressure = getValue(_AI, 3) / 2.43 ' Convert sensor analogic value to readable pressure.
+     return
+
+actuate_command:
+     old_command = current_command ' Place the current_command in the old one.
+     current_command = getValue(_VAR, 9)
+     return
+
+detect_stop:
+     stop_state = getValue(_VAR, 10)
+     while stop_state = 1
+     stop_state = getValue(_VAR, 10)
+     end while
+     return
+
+wait_for_init_command:
+     gosub actuate_command
+     if  current_command = 1 then ' If VAR9 is set to 1, then the init command have been asked.
+          return
+     end if
+     gosub wait_for_init_command ' Otherwise, anything happen and it starts once again.
+     return
+
+wait_for_run_command:
+     gosub actuate_command
+     if current_command = 2 then ' If VAR9 is set to 2, then the run command have been asked.
+          return
+     end if
+     gosub wait_for_run_command ' Otherwise, anything happen and it starts once again.
+     return
+
+tank_refilled:
+     command_motor_speed = 1500 ' Set the pump speed to 1500 RPM
+     setTimerCount(0,10000)
+     while current_pressure <= 1200 or getTimerState(0) = 0
+          setCommand(_G, 1, command_motor_speed) ' Apply the speed to the pump
+          gosub actuate_pressure ' actuate the pressure
+     end while ' Do this while the pressure is not good or if 10 secondes have passed
+     if getTimerState(0) = 1 ' If after 10 secondes the pressure is not superior to 1200 hPa.
+          gosub test_pressure ' Go to the test_pressure and start once again
+     end if ' If the pressure is good, set the empty flag to 0 and the pump speed to 800 RPM
+     is_empty = false
+     command_motor_speed = PREDEFINED_MOTOR_SPEED
+     return
+
+
+test_pressure:
+     if current_pressure <= 1100 then ' Check if the pressure is above 1100 hPa
+          is_empty = true
+     end if
+     if is empty then ' If the pressure is low, ask to restart the initialisation after refilling the tank
+          gosub wait_for_command
+          gosub tank_refilled ' Test if the tank has been refilled
+     return
+
+'###############################################################################
+
+init:
+     gosub tank_refilled
+
+run:
+     gosub actuate_command
