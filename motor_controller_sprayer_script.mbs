@@ -40,7 +40,9 @@ detect_stop:
      return
 
 wait_for_init_command:
-     gosub actuate_command
+     'gosub actuate_command '$$$$$$$$$$$$$$$$$$$$$$$ a decommenter
+     wait (2000) '&&&&&&&&&&&&&&&&&&&&&&  a enlever
+     current_command = 1 ' &&&&&&&&&&&&&&&&&&& a enlever
      if  current_command = 1 then ' If VAR9 is set to 1, then the init command have been asked.
           return
      end if
@@ -48,7 +50,9 @@ wait_for_init_command:
      return
 
 wait_for_run_command:
-     gosub actuate_command
+     'gosub actuate_command '$$$$$$$$$$$$$$$$$$$$$$$ a decommenter
+     wait (2000) '&&&&&&&&&&&&&&&&&&&&&&  a enlever
+     current_command = 2 ' &&&&&&&&&&&&&&&&&&& a enlever
      if current_command = 2 then ' If VAR9 is set to 2, then the run command have been asked.
           return
      end if
