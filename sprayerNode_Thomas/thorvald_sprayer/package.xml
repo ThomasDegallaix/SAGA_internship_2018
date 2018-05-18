@@ -4,17 +4,9 @@
   <version>0.0.0</version>
   <description>The thorvald_sprayer package</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <!-- Example:  -->
-  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
   <maintainer email="thomas.degallaix@isen.yncrea.fr">Thomas Degallaix</maintainer>
-  <maintainer email="guillaume.broquet@isen.yncrea.fr">Guillaume Broquet</maintainer>
-
   <license>BSD</license>
-
   <author email="thomas.degallaix@isen.yncrea.fr">Thomas Degallaix</author>
-  <author email="guillume.broquet@isen.yncrea.fr">Guillaume Broquet</author>
-
 
   <buildtool_depend>catkin</buildtool_depend>
 

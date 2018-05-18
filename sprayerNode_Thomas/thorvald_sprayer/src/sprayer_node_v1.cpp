@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
   }
 
   /*Initializing the node*/
-  ros::init(argc,argv,"sprayer_node");
+  ros::init(argc,argv,"sprayer_node_v1");
 
   /*Start the node*/
   ros::NodeHandle nh;

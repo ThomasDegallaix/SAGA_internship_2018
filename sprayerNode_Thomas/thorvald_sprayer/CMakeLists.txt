@@ -200,6 +200,10 @@ include_directories(
 
 catkin_package()
 
-add_executable(sprayer src/sprayer_node.cpp)
-target_link_libraries(sprayer ${catkin_LIBRARIES})
-add_dependencies(sprayer thorvald_sprayer_generate_message_cpp)
+add_executable(sprayerV1 src/sprayer_node_v1.cpp)
+target_link_libraries(sprayerV1 ${catkin_LIBRARIES})
+add_dependencies(sprayerV1 thorvald_sprayer_generate_message_cpp)
+
+add_executable(sprayerV2 src/sprayer_node_v2.cpp)
+target_link_libraries(sprayerV2 ${catkin_LIBRARIES})
+add_dependencies(sprayerV2 thorvald_sprayer_generate_message_cpp)
