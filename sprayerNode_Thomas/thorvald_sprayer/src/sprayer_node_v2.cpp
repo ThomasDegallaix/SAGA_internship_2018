@@ -70,7 +70,7 @@ void display_infos(thorvald_sprayer::CANopen_command *msg, int count, char** arg
 
 int main(int argc, char **argv) {
 
-  if(argc < 3 ) {
+  if(argc != 3 ) {
     ROS_WARN("Usage: %s [NODE_id] [Action to perform]", argv[0]);
     ROS_WARN("Action to perform: \n    - [init]\n    - [run]\n    - [break]\r");
     return 1;
