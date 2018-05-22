@@ -24,7 +24,9 @@ angular:
 ###ON THE ROBOT###
 Topics to use: /can_frames_device_t   /can_frames_device_r
 
-Pour lancer l'environnement du robot: roslaunch thorvald_bringup thorvald_ii_2wd0ws_tora.launch
+mdpc:visitNorway
+
+Pour lancer l'environnement du robot: roslaunch tora_launchers thorvald_ii_2wd0ws_tora.launch
 
 Pour communiquer avec la pompe en lignes de commandes ex:
 rostopic pub -r 1 /can_frames_device_t thorvald_base/CANFrame "id:517
