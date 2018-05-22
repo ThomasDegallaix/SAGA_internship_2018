@@ -1,6 +1,6 @@
 int32 can_id
 int32 length
-char[8] data
+uint16[2] data
 ---
 string message
 bool success
