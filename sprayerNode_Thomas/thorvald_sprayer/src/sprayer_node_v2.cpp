@@ -71,14 +71,14 @@ void display_infos(thorvald_sprayer::CANFrame *msg, int count, char** argv) {
 
 int main(int argc, char **argv) {
 
+  /*Initializing the node*/
+  ros::init(argc,argv,"sprayer_node_v2");
+
   if(argc != 3 ) {
     ROS_WARN("Usage: %s [NODE_id] [Action to perform]", argv[0]);
     ROS_WARN("Action to perform: \n    - [init]\n    - [run]\n    - [break]\r");
     return 1;
   }
-
-  /*Initializing the node*/
-  ros::init(argc,argv,"sprayer_node_v2");
 
   /*Start the node*/
   ros::NodeHandle nh;
