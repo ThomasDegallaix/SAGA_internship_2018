@@ -7,8 +7,8 @@ int main(int argc, char **argv) {
 
   ros::init(argc,argv,"sprayer_controller_v1");
 
-  if(argc != 2 ) {
-    ROS_WARN("Usage: %s [Action to perform]", argv[0]);
+  if(argc != 3 ) {
+    ROS_WARN("Usage: [node ID] [Action to perform]");
     ROS_WARN("Action to perform: \n    - [init]\n    - [run]\n    - [break]\r");
     return 1;
   }
@@ -18,7 +18,8 @@ int main(int argc, char **argv) {
 
   thorvald_sprayer::sprayer_controller srv;
 
-  srv.request.order = argv[1];
+  srv.request.nodeID = atoi(argv[1]);
+  srv.request.order = argv[2];
   ROS_INFO("Sending %s order...", argv[1]);
 
   if (client.call(srv)) {
