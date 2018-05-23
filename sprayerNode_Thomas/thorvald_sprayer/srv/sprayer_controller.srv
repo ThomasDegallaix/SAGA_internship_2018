@@ -1,5 +1,0 @@
-string order
-uint32 nodeID
----
-string message
-
