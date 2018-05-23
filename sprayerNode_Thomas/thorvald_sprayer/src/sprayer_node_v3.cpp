@@ -88,7 +88,7 @@ void display_infos(thorvald_sprayer::CANFrame *msg, int count, Request request) 
   }
   ROS_INFO("ID: %d", msg->can_id);
   ROS_INFO("Length: %d", msg->length);
-  ROS_INFO("Data: [%d,%d]", msg->data[0], msg->data[3]);
+  ROS_INFO("Data: [%d,%d]", msg->data[0], msg->data[4]);
 }
 
 
