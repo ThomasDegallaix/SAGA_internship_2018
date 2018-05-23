@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
 
   srv.request.nodeID = atoi(argv[1]);
   srv.request.order = argv[2];
-  ROS_INFO("Sending %s order...", argv[1]);
+  ROS_INFO("Sending %s order...", argv[2]);
 
   if (client.call(srv)) {
     ROS_INFO("ACK: %s", srv.response.message.c_str());
