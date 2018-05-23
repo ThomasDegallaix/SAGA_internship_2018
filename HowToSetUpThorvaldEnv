@@ -31,4 +31,4 @@ Pour lancer l'environnement du robot: roslaunch tora_launchers thorvald_ii_2wd0w
 Pour communiquer avec la pompe en lignes de commandes ex:
 rostopic pub -r 1 /can_frames_device_t thorvald_base/CANFrame "id:517
 length:8
-data:[1,0,0,0,0,0,0,0]" (Dans l'ordre: 4 octets de VAR_9 puis 4 octets de VAR_10)
+data:[1,0,0,0,0,0,0,0]" (Dans l'ordre: de VAR9 à VAR16)
