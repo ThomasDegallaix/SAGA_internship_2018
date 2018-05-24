@@ -1,8 +1,0 @@
-prefix=/home/thomasdegallaix-ubuntu/catkin_ws/devel
-
-Name: rpi_test
-Description: Description of rpi_test
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/thomasdegallaix-ubuntu/catkin_ws/devel/lib 
-Requires: 
