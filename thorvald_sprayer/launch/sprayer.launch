@@ -9,6 +9,6 @@
 			<arg name="simple_sim" value="$(arg simple_sim)"/>
 		</include>
 
-		<node pkg="thorvald_sprayer" name="Sprayer" type="sprayerV4"/>
+		<node pkg="thorvald_sprayer" name="Sprayer" type="sprayerV5"/>
 
 </launch>

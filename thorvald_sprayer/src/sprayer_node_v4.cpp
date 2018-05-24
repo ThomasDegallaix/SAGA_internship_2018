@@ -91,7 +91,7 @@ thorvald_sprayer::CANFrame fulfill_message(thorvald_sprayer::CANFrame *msg, int 
 
 
 /*Function used to create the correct message according to the action asked by the user*/
-thorvald_sprayer::CANFrame process_data(thorvald_sprayer::CANFrame *msg, Request request, char** argv) {
+thorvald_sprayer::CANFrame process_data(thorvald_sprayer::CANFrame *msg, Request request) {
 
   if(strcmp(request.order.c_str(),"ON") == 0) {
     fulfill_message(msg,rpdo1,request.nodeID,1,0);
@@ -105,8 +105,6 @@ thorvald_sprayer::CANFrame process_data(thorvald_sprayer::CANFrame *msg, Request
 
   return *msg;
 }
-
-
 
 
 
@@ -148,7 +146,7 @@ int main(int argc, char **argv) {
     /*Instantiate a new message*/
     thorvald_sprayer::CANFrame msg;
 
-    process_data(&msg, request, argv);
+    process_data(&msg, request);
     display_infos(&msg, count, request);
 
     sprayer_pub.publish(msg);
