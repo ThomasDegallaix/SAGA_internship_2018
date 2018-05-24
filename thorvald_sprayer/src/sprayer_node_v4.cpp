@@ -4,7 +4,7 @@
 #include "std_msgs/String.h"
 #include <cstring>
 
-//https://github.com/g/roboteq
+//https://answers.ros.org/question/59725/publishing-to-a-topic-via-subscriber-callback-function/
 
 using namespace std;
 
@@ -13,6 +13,7 @@ struct Request {
   string order;
   int nodeID;
 } request;
+
 
 /*List of used TPDO, for more informations look at the roboteq datasheet*/
 enum RPDO {rpdo1=0x200,rpdo2=0x300,rpdo3=0x400,rpdo4=0x500};

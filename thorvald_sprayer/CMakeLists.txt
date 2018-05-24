@@ -217,6 +217,10 @@ add_executable(sprayerV4 src/sprayer_node_v4.cpp)
 target_link_libraries(sprayerV4 ${catkin_LIBRARIES})
 add_dependencies(sprayerV4 thorvald_sprayer_generate_message_cpp)
 
+add_executable(sprayerV5 src/sprayer_node_v5.cpp)
+target_link_libraries(sprayerV5 ${catkin_LIBRARIES})
+add_dependencies(sprayerV5 thorvald_sprayer_generate_message_cpp)
+
 add_executable(sprayerControllerV1 src/sprayer_controller_v1.cpp)
 target_link_libraries(sprayerControllerV1 ${catkin_LIBRARIES})
 add_dependencies(sprayerControllerV1 thorvald_sprayer_generate_message_cpp)
