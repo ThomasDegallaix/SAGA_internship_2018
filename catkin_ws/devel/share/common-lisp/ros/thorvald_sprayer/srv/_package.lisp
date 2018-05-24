@@ -1,0 +1,10 @@
+(cl:defpackage thorvald_sprayer-srv
+  (:use )
+  (:export
+   "SPRAYER_CONTROLLER"
+   "<SPRAYER_CONTROLLER-REQUEST>"
+   "SPRAYER_CONTROLLER-REQUEST"
+   "<SPRAYER_CONTROLLER-RESPONSE>"
+   "SPRAYER_CONTROLLER-RESPONSE"
+  ))
+

@@ -1,0 +1,8 @@
+prefix=/home/thomasdegallaix-ubuntu/catkin_ws/install
+
+Name: thorvald_sprayer
+Description: Description of thorvald_sprayer
+Version: 0.0.0
+Cflags: -I/home/thomasdegallaix-ubuntu/catkin_ws/install/include
+Libs: -L/home/thomasdegallaix-ubuntu/catkin_ws/install/lib 
+Requires: 
