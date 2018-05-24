@@ -77,7 +77,7 @@ thorvald_sprayer::CANFrame fulfill_message(thorvald_sprayer::CANFrame *msg, int 
                     msg->data[7] = var_2;
                     break;
                  }
-    default : ROS_ERROR("Bad RPDO used");
+    default : ROS_ERROR("The requested RPDO doesn't exist");
               break;
   }
 
