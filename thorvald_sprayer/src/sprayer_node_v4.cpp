@@ -4,7 +4,6 @@
 #include "std_msgs/String.h"
 #include <cstring>
 
-//https://answers.ros.org/question/59725/publishing-to-a-topic-via-subscriber-callback-function/
 
 using namespace std;
 
