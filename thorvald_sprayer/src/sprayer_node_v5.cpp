@@ -1,9 +1,11 @@
 #include "ros/ros.h"
 #include <thorvald_sprayer/CANFrame.h>
 #include <thorvald_sprayer/sprayer_controller.h>
+#include <thorvald_sprayer/feedbackData.h>
 #include "std_msgs/String.h"
 #include <cstring>
 
+#define DESIRED_PRESSURE 3000
 
 using namespace std;
 
@@ -26,15 +28,22 @@ public:
 
   /* Constructor */
   ThorvaldSprayer() {
+
+    /*Initialing the array of data*/
+    for(int i=0;i<8;i++) {
+      msg.data.push_back(0);
+    }
     pub_ = n_.advertise<thorvald_sprayer::CANFrame>("/can_frames_device_t",1000);
     ss_ = n_.advertiseService("sprayer_controller",&ThorvaldSprayer::onOffCallback,this);
+    sub_ = n_.subscribe("/can_frames_device_r",1000,&ThorvaldSprayer::pressureEnslavement,this);
   }
 
   /* Getters and Setters */
   Request getRequest() const { return onOffRequest; };
   ros::Publisher getPublisher() const { return pub_; };
   thorvald_sprayer::CANFrame getMsg() { return msg; };
-
+  int getPressure() { return pressure; };
+  int getMotorSpeed() { return motorSpeed; };
   void setMsg(int rpdo, int node_id, int var_1, int var_2);
 
 
@@ -63,7 +72,26 @@ public:
 
 
   /* Callback for the pressure enslavement */
-  //TODO
+  void pressureEnslavement(thorvald_sprayer::feedbackData fb) {
+
+    pressure = fb.pressure;
+    ROS_ERROR("Pression fb %d\n", fb.pressure);
+    ROS_ERROR("Pression classe %d\n", pressure);
+    ROS_ERROR("Vitesse moteur %d\n", motorSpeed);
+    if(pressure < DESIRED_PRESSURE){
+      motorSpeed += 50; //valeur a pif a modifier
+      if(motorSpeed < 0){
+        motorSpeed = 0;
+      }
+    }
+    else if(pressure >= DESIRED_PRESSURE){
+      motorSpeed -= 50; //valeur a pif a modifier
+      if(motorSpeed > 1200){
+        motorSpeed = 1200;
+      } //mettre vitesse max du moteur
+    }
+    ROS_ERROR("Nouvelle vitesse moteur %d\n", motorSpeed);
+  }
 
 
 private:
@@ -71,13 +99,15 @@ private:
   /*Start the node*/
   ros::NodeHandle n_;
 
-  ros::Publisher pub_; //TO USE
+  ros::Publisher pub_;
   ros::Subscriber sub_;
   ros::ServiceServer ss_;
 
   thorvald_sprayer::CANFrame msg;
   Request onOffRequest;
   bool tankIsEmpty;
+  int pressure;
+  int motorSpeed;
 
 };
 
@@ -89,12 +119,7 @@ private:
 /*Function used to fulfill the message*/
 /*Each element of msg.data correspond to a variable used by the motor controller from VAR_9 to VAR_16, cf Roboteq's user manual*/
 void ThorvaldSprayer::setMsg(int rpdo, int node_id, int var_1, int var_2) {
-  msg.can_id = rpdo + node_id;
-
-  /*Initialing the array of data*/
-  for(int i=0;i<8;i++) {
-    msg.data[i] = 0;
-  }
+  msg.id = rpdo + node_id;
 
   switch(rpdo) {
     case 0x200 : {  msg.data[0] = var_1;
@@ -117,7 +142,7 @@ void ThorvaldSprayer::setMsg(int rpdo, int node_id, int var_1, int var_2) {
               break;
   }
 
-  msg.length = sizeof(msg.data)/sizeof(msg.data[0]);
+  msg.length = 8; //sizeof(msg.data)/sizeof(msg.data[0]);
 }
 
 
@@ -146,7 +171,7 @@ void ThorvaldSprayer::display_infos(thorvald_sprayer::CANFrame msg, int count, R
   else{
     ROS_INFO("#%d RPDO not implemented yet", count);
   }
-  ROS_INFO("ID: %d", msg.can_id);
+  ROS_INFO("ID: %d", msg.id);
   ROS_INFO("Length: %d", msg.length);
   ROS_INFO("Data: [%d,%d,%d,%d,%d,%d,%d,%d]", msg.data[0], msg.data[1], msg.data[2], msg.data[3], msg.data[4], msg.data[5], msg.data[6], msg.data[7]);
 }

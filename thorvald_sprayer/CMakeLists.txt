@@ -201,30 +201,14 @@ include_directories(
 
 catkin_package()
 
-add_executable(sprayerV1 src/sprayer_node_v1.cpp)
-target_link_libraries(sprayerV1 ${catkin_LIBRARIES})
-add_dependencies(sprayerV1 thorvald_sprayer_generate_message_cpp)
-
-add_executable(sprayerV2 src/sprayer_node_v2.cpp)
-target_link_libraries(sprayerV2 ${catkin_LIBRARIES})
-add_dependencies(sprayerV2 thorvald_sprayer_generate_message_cpp)
-
-add_executable(sprayerV3 src/sprayer_node_v3.cpp)
-target_link_libraries(sprayerV3 ${catkin_LIBRARIES})
-add_dependencies(sprayerV3 thorvald_sprayer_generate_message_cpp)
-
-add_executable(sprayerV4 src/sprayer_node_v4.cpp)
-target_link_libraries(sprayerV4 ${catkin_LIBRARIES})
-add_dependencies(sprayerV4 thorvald_sprayer_generate_message_cpp)
 
 add_executable(sprayerV5 src/sprayer_node_v5.cpp)
 target_link_libraries(sprayerV5 ${catkin_LIBRARIES})
 add_dependencies(sprayerV5 thorvald_sprayer_generate_message_cpp)
 
-add_executable(sprayerControllerV1 src/sprayer_controller_v1.cpp)
-target_link_libraries(sprayerControllerV1 ${catkin_LIBRARIES})
-add_dependencies(sprayerControllerV1 thorvald_sprayer_generate_message_cpp)
 
 add_executable(sprayerControllerV2 src/sprayer_controller_v2.cpp)
 target_link_libraries(sprayerControllerV2 ${catkin_LIBRARIES})
 add_dependencies(sprayerControllerV2 thorvald_sprayer_generate_message_cpp)
+
+

@@ -1,3 +1,3 @@
-uint32 can_id
+uint32 id
 uint8 length
-uint8[8] data
+uint8[] data
