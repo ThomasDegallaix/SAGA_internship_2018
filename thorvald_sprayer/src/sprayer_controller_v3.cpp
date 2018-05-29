@@ -10,9 +10,7 @@ using namespace std;
 /*This service was designed to allow the user to start and stop the pump*/
 int main(int argc, char **argv) {
 
-  ros::init(argc,argv,"sprayer_controller_v2");
-
-
+  ros::init(argc,argv,"sprayer_controller_v3");
 
   ros::NodeHandle nh;
   ros::ServiceClient client = nh.serviceClient<thorvald_sprayer::sprayer_controller>("sprayer_controller");

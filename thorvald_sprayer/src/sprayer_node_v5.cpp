@@ -1,9 +1,11 @@
 #include "ros/ros.h"
 #include <thorvald_sprayer/CANFrame.h>
 #include <thorvald_sprayer/sprayer_controller.h>
-#include <thorvald_sprayer/feedbackData.h>
-#include "std_msgs/String.h"
+#include "commands.h"
 #include <cstring>
+#include "std_msgs/String.h"
+
+
 
 #define DESIRED_PRESSURE 3000
 
@@ -35,7 +37,7 @@ public:
     }
     pub_ = n_.advertise<thorvald_sprayer::CANFrame>("/can_frames_device_t",1000);
     ss_ = n_.advertiseService("sprayer_controller",&ThorvaldSprayer::onOffCallback,this);
-    sub_ = n_.subscribe("/can_frames_device_r",1000,&ThorvaldSprayer::pressureEnslavement,this);
+    sub_ = n_.subscribe("/can_frames_device_r",1000,&ThorvaldSprayer::feedBack,this);
   }
 
   /* Getters and Setters */
@@ -44,7 +46,7 @@ public:
   thorvald_sprayer::CANFrame getMsg() { return msg; };
   int getPressure() { return pressure; };
   int getMotorSpeed() { return motorSpeed; };
-  void setMsg(int rpdo, int node_id, int var_1, int var_2);
+  void setMsg(int node_id, const string command[9]);
 
 
   /* class member functions */
@@ -70,8 +72,14 @@ public:
     return true;
   }
 
+  /* Callback for the feedback */
+  void feedBack(const thorvald_sprayer::CANFrame &fb) {
+    ROS_INFO("%d\n", fb.id);
+  }
+
 
   /* Callback for the pressure enslavement */
+  /*
   void pressureEnslavement(thorvald_sprayer::feedbackData fb) {
 
     pressure = fb.pressure;
@@ -92,6 +100,7 @@ public:
     }
     ROS_ERROR("Nouvelle vitesse moteur %d\n", motorSpeed);
   }
+  */
 
 
 private:
@@ -105,9 +114,11 @@ private:
 
   thorvald_sprayer::CANFrame msg;
   Request onOffRequest;
+
   bool tankIsEmpty;
   int pressure;
   int motorSpeed;
+  string status;
 
 };
 
@@ -118,28 +129,22 @@ private:
 
 /*Function used to fulfill the message*/
 /*Each element of msg.data correspond to a variable used by the motor controller from VAR_9 to VAR_16, cf Roboteq's user manual*/
-void ThorvaldSprayer::setMsg(int rpdo, int node_id, int var_1, int var_2) {
+void ThorvaldSprayer::setMsg(int node_id, const string command[9]) {
+
+  int rpdo = 0;
+
+  if (command[0] == "rpdo1") { rpdo = rpdo1; }
+  else if (command[0] == "rpdo2") { rpdo = rpdo2; }
+  else if (command[0] == "rpdo3") { rpdo = rpdo3; }
+  else if (command[0] == "rpdo4") { rpdo = rpdo4; }
+  else {
+    ROS_ERROR("Something is wrong with the RPDO used by the command");
+  }
+
   msg.id = rpdo + node_id;
 
-  switch(rpdo) {
-    case 0x200 : {  msg.data[0] = var_1;
-                    msg.data[1] = var_2;
-                    break;
-                 }
-    case 0x300 : {  msg.data[2] = var_1;
-                    msg.data[3] = var_2;
-                    break;
-                 }
-    case 0x400 : {  msg.data[4] = var_1;
-                    msg.data[5] = var_2;
-                    break;
-                 }
-    case 0x500 : {  msg.data[6] = var_1;
-                    msg.data[7] = var_2;
-                    break;
-                 }
-    default : ROS_ERROR("The requested RPDO doesn't exist");
-              break;
+  for(int i = 1; i < 9; i++) {
+    msg.data[i-1] = atoi(command[i].c_str());
   }
 
   msg.length = 8; //sizeof(msg.data)/sizeof(msg.data[0]);
@@ -151,10 +156,10 @@ void ThorvaldSprayer::setMsg(int rpdo, int node_id, int var_1, int var_2) {
 void ThorvaldSprayer::process_data(Request request) {
 
   if(strcmp(request.order.c_str(),"ON") == 0) {
-    setMsg(rpdo1,request.nodeID,1,0);
+    setMsg(request.nodeID,commands::ON);
   }
   else if(strcmp(request.order.c_str(),"OFF") == 0) {
-    setMsg(rpdo1,request.nodeID,0,0);
+    setMsg(request.nodeID,commands::OFF);
   }
   else{
     ROS_WARN("/!\\ Doesn't know which action has to be performed /!\\");
@@ -194,8 +199,6 @@ int main(int argc, char **argv) {
 
   int count = 0;
   while(ros::ok()) {
-
-    //ROS_INFO("#%d %s\n", count, sprayer.getRequest().order.c_str());
 
     sprayer.process_data(sprayer.getRequest());
     sprayer.display_infos(sprayer.getMsg(), count, sprayer.getRequest());
