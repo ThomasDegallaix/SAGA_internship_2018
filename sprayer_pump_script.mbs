@@ -1,0 +1,73 @@
+'########################################################################
+
+'#####	@file: sprayer_pump_script
+'#####	@version: 1.0.0
+'#####	@licence: MIT
+'#####	@author: Antoine Bedhome
+
+'########################################################################
+
+init:
+	wait(2000)
+
+main:
+	wait(50)
+	if getValue(_VAR, 9) = 1
+		setCommand(_G, 1, 0)
+		setCommand(_VAR, 2, 1)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	elseif getValue(_VAR, 9) = 2 
+		setCommand(_G, 1, 200)
+		setCommand(_VAR, 2, 2)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	elseif getValue(_VAR, 9) = 3 
+		setCommand(_G, 1, 300)
+		setCommand(_VAR, 2, 3)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	elseif getValue(_VAR, 9) = 4 
+		setCommand(_G, 1, 400)
+		setCommand(_VAR, 2, 4)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	elseif getValue(_VAR, 9) = 5 
+		setCommand(_G, 1, 500)
+		setCommand(_VAR, 2, 5)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	elseif getValue(_VAR, 9) = 6 
+		setCommand(_G, 1, 600)
+		setCommand(_VAR, 2, 6)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	elseif getValue(_VAR, 9) = 7 
+		setCommand(_G, 1, 700)
+		setCommand(_VAR, 2, 7)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	elseif getValue(_VAR, 9) = 8 
+		setCommand(_G, 1, 800)
+		setCommand(_VAR, 2, 8)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	elseif getValue(_VAR, 9) = 9 
+		setCommand(_G, 1, 900)
+		setCommand(_VAR, 2, 9)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	elseif getValue(_VAR, 9) = 10 
+		setCommand(_G, 1, 1000)
+		setCommand(_VAR, 2, 10)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	else
+		setCommand(_G, 1, 0)
+		setCommand(_VAR, 2, 0)
+		setCommand(_VAR, 1, getValue(_AI,3))
+		wait(50)
+	end if
+	goto main
+
+'########################################################################
