@@ -148,7 +148,7 @@ void ThorvaldSprayer::setMsg(int node_id, const string command[9]) {
     msg.data[i-1] = atoi(command[i].c_str());
   }
 
-  msg.length = 8; //sizeof(msg.data)/sizeof(msg.data[0]);
+  msg.length = 8;
 }
 
 
@@ -157,10 +157,10 @@ void ThorvaldSprayer::setMsg(int node_id, const string command[9]) {
 void ThorvaldSprayer::process_data(Request request) {
 
   if(strcmp(request.order.c_str(),"ON") == 0) {
-    setMsg(request.nodeID,commands::ON);
+    setMsg(request.nodeID,commands::MODE8);
   }
   else if(strcmp(request.order.c_str(),"OFF") == 0) {
-    setMsg(request.nodeID,commands::OFF);
+    setMsg(request.nodeID,commands::STOP);
   }
   else{
     ROS_WARN("/!\\ Doesn't know which action has to be performed /!\\");
