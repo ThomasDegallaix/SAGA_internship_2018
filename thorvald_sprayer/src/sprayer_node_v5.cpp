@@ -45,7 +45,6 @@ public:
   ros::Publisher getPublisher() const { return pub_; };
   thorvald_sprayer::CANFrame getMsg() { return msg; };
   int getPressure() { return pressure; };
-  int getMotorSpeed() { return motorSpeed; };
   void setMsg(int node_id, const string command[9]);
 
 
@@ -117,9 +116,6 @@ private:
 
   bool tankIsEmpty;
   int pressure;
-  int motorSpeed;
-  string status;
-
 };
 
 
@@ -128,7 +124,6 @@ private:
 
 
 /*Function used to fulfill the message*/
-/*Each element of msg.data correspond to a variable used by the motor controller from VAR_9 to VAR_16, cf Roboteq's user manual*/
 void ThorvaldSprayer::setMsg(int node_id, const string command[9]) {
 
   int rpdo = 0;
