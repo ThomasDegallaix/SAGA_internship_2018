@@ -74,7 +74,8 @@ public:
 
   /* Callback for the feedback */
   void feedBack(const thorvald_sprayer::CANFrame &fb) {
-    ROS_INFO("%d\n", fb.id);
+    ROS_INFO("ID : %d\n", fb.id);
+    pressure = fb.data[0] + (2^8)*fb.data[1]    
   }
 
 
