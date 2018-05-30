@@ -75,7 +75,9 @@ public:
   /* Callback for the feedback */
   void feedBack(const thorvald_sprayer::CANFrame &fb) {
     ROS_INFO("ID : %d\n", fb.id);
-    pressure = fb.data[0] + (2^8)*fb.data[1]    
+    pump_status = fb.data[5];
+    this.status = pump_status;
+    this.pressure = fb.data[0] + pow(2,8)*fb.data[1];
   }
 
 
@@ -118,8 +120,7 @@ private:
 
   bool tankIsEmpty;
   int pressure;
-  int motorSpeed;
-  string status;
+  int status;
 
 };
 
@@ -192,6 +193,8 @@ int main(int argc, char **argv) {
 
   /*Initializing the node*/
   ros::init(argc,argv,"sprayer_node_v5");
+
+pump_status = -1;
 
   ThorvaldSprayer sprayer;
 

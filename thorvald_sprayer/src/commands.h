@@ -2,7 +2,7 @@
 
 #ifndef COMMANDS_H
 #define COMMANDS_H
-#endif
+extern int pump_status;
 
 /* Storage for every command used by the sprayer */
 /* A command needs to have the name of the rpdo used a (from rdpo1 to 4) and the 8 bytes of data */
@@ -23,3 +23,4 @@ namespace commands {
 
 
 }
+#endif
