@@ -211,3 +211,7 @@ target_link_libraries(sprayerControllerV3 ${catkin_LIBRARIES})
 add_dependencies(sprayerControllerV3 thorvald_sprayer_generate_message_cpp)
 
 
+add_executable(sprayerONOFFV1 src/sprayer_ONOFF_v1.cpp)
+target_link_libraries(sprayerONOFFV1  ${catkin_LIBRARIES})
+add_dependencies(sprayerONOFFV1  thorvald_sprayer_generate_message_cpp)
+
