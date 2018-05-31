@@ -27,7 +27,7 @@ void getServiceCB(thorvald_sprayer::sprayer_controller srv) {
 void statusCallback(const thorvald_sprayer::CANFrame &msg) {
 
   thorvald_sprayer::sprayer_controller srv;
-  int status = (int)msg.data[0];
+  int status = (int)msg.data[4];
 
   if (status == 0) {
     ROS_INFO("Sending ON request...");

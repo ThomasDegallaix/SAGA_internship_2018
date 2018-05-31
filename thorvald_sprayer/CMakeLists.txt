@@ -204,14 +204,14 @@ catkin_package()
 add_executable(sprayerV5 src/sprayer_node_v5.cpp)
 target_link_libraries(sprayerV5 ${catkin_LIBRARIES})
 add_dependencies(sprayerV5 thorvald_sprayer_generate_message_cpp)
-
+add_dependencies(sprayerV5 ${catkin_EXPORTED_TARGETS})
 
 add_executable(sprayerControllerV3 src/sprayer_controller_v3.cpp)
 target_link_libraries(sprayerControllerV3 ${catkin_LIBRARIES})
 add_dependencies(sprayerControllerV3 thorvald_sprayer_generate_message_cpp)
-
+add_dependencies(sprayerControllerV3 ${catkin_EXPORTED_TARGETS})
 
 add_executable(sprayerONOFFV1 src/sprayer_ONOFF_v1.cpp)
 target_link_libraries(sprayerONOFFV1  ${catkin_LIBRARIES})
 add_dependencies(sprayerONOFFV1  thorvald_sprayer_generate_message_cpp)
-
+add_dependencies(sprayerONOFFV1 ${catkin_EXPORTED_TARGETS})
