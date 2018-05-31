@@ -8,7 +8,7 @@
 
 using namespace std;
 
-/*Variable store the address of the service in order to use it in the subscriber callback*/
+/*Global variable which stores the address of the service in order to use it in the subscriber callback*/
 ros::ServiceClient *clientPtr;
 
 
@@ -25,7 +25,7 @@ void getServiceCB(thorvald_sprayer::sprayer_controller srv) {
 
 
 /*Callback which check the state of the pump by subscribing to the data feedback and ask to the server for a specific action in consequence*/
-void statusCallback(const thorvald_sprayer::CANFrame &msg) {
+void statusCallback(const thorvald_sprayer::CANFrame::ConstPtr &msg) {
 
   thorvald_sprayer::sprayer_controller srv;
   int status = (int)msg.data[4];
