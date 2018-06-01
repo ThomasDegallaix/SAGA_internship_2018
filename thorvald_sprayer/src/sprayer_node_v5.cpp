@@ -36,8 +36,8 @@ public:
       msg.data.push_back(0);
     }
     pub_ = n_.advertise<thorvald_sprayer::CANFrame>("/can_frames_device_t",1000);
-    ss_mode = n_.advertiseService("sprayer_controller",&ThorvaldSprayer::modeCallback,this);
-    ss_onoff = n_.advertiseService("sprayer_ONOFF",&ThorvaldSprayer::onOffCallback,this);
+    ss_mode = n_.advertiseService("sprayer_controller",&ThorvaldSprayer::serviceCallback,this);
+    ss_onoff = n_.advertiseService("sprayer_ONOFF",&ThorvaldSprayer::serviceCallback,this);
     sub_ = n_.subscribe("/can_frames_device_r",1000,&ThorvaldSprayer::feedBack,this);
   }
 
@@ -55,7 +55,7 @@ public:
   void display_infos(thorvald_sprayer::CANFrame msg, int count, Request request);
 
   /*callback for the service client, stores the request into class variables used to send commands to the pump*/
-  bool modeCallback(thorvald_sprayer::sprayer_controller::Request &req, thorvald_sprayer::sprayer_controller::Response &res) {
+  bool serviceCallback(thorvald_sprayer::sprayer_controller::Request &req, thorvald_sprayer::sprayer_controller::Response &res) {
 
     serviceRequest.order = req.order.c_str();
     serviceRequest.nodeID = req.nodeID;
@@ -99,23 +99,8 @@ public:
     return true;
   }
 
-  /*callback for the service client, stores the request into class variables used to send commands to the pump*/
-  bool onOffCallback(thorvald_sprayer::sprayer_controller::Request &req, thorvald_sprayer::sprayer_controller::Response &res) {
+  
 
-    serviceRequest.order = req.order.c_str();
-    serviceRequest.nodeID = req.nodeID;
-
-    if(strcmp(req.order.c_str(),"ON") == 0) {
-      res.message = "ON request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"OFF") == 0) {
-      res.message = "OFF request has been given";
-    }
-    else {
-      res.message = "ERR: Request not recognised";
-    }
-    return true;
-  }
 
   /* Callback for the feedback */
   void feedBack(const thorvald_sprayer::CANFrame &fb) {
