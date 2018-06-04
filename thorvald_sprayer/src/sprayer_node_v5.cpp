@@ -1,13 +1,11 @@
 #include "ros/ros.h"
-#include <thorvald_sprayer/CANFrame.h>
-#include <thorvald_sprayer/sprayer_controller.h>
+#include <thorvald_base/CANFrame.h>
 #include "commands.h"
 #include <cstring>
 #include "std_msgs/String.h"
+#include <std_srvs/Trigger.h>
 
-
-
-#define DESIRED_PRESSURE 3000
+#define NODE_ID 5
 
 using namespace std;
 
@@ -16,9 +14,12 @@ enum RPDO {rpdo1=0x200,rpdo2=0x300,rpdo3=0x400,rpdo4=0x500};
 
 /*Structure used to store the service request*/
 struct Request {
-  string order;
-  int nodeID;
+  string state;
+  int mode;
 };
+
+/*Global variable use to know if the speed of the pump has to be incremented or decremented when pushing the xbox controller button*/
+bool g_botToTop = true;
 
 
 
@@ -35,104 +36,93 @@ public:
     for(int i=0;i<8;i++) {
       msg.data.push_back(0);
     }
-    pub_ = n_.advertise<thorvald_sprayer::CANFrame>("/can_frames_device_t",1000);
-    ss_mode = n_.advertiseService("sprayer_controller",&ThorvaldSprayer::serviceCallback,this);
-    ss_onoff = n_.advertiseService("sprayer_ONOFF",&ThorvaldSprayer::serviceCallback,this);
+    serviceRequest.state = "OFF";
+    serviceRequest.mode = 1;
+
+    pub_ = n_.advertise<thorvald_base::CANFrame>("/can_frames_device_t",1000);
     sub_ = n_.subscribe("/can_frames_device_r",1000,&ThorvaldSprayer::feedBack,this);
+    ss_mode = n_.advertiseService("sprayer_MODE",&ThorvaldSprayer::modeCallback,this);
+    ss_onoff = n_.advertiseService("sprayer_ONOFF",&ThorvaldSprayer::onoffCallback,this);
   }
 
   /* Getters and Setters */
   Request getRequest() const { return serviceRequest; };
   ros::Publisher getPublisher() const { return pub_; };
-  thorvald_sprayer::CANFrame getMsg() { return msg; };
+  thorvald_base::CANFrame getMsg() { return msg; };
   int getPressure() { return pressure; };
-  void setMsg(int node_id, const string command[9]);
+  void setMsg(const string command[9]);
 
 
   /* class member functions */
 
   void process_data(Request request);
-  void display_infos(thorvald_sprayer::CANFrame msg, int count, Request request);
+  void display_infos(thorvald_base::CANFrame msg, int count, Request request);
 
-  /*callback for the service client, stores the request into class variables used to send commands to the pump*/
-  bool serviceCallback(thorvald_sprayer::sprayer_controller::Request &req, thorvald_sprayer::sprayer_controller::Response &res) {
 
-    serviceRequest.order = req.order.c_str();
-    serviceRequest.nodeID = req.nodeID;
+  /*Callback used to trigger commands with the xbox controller*/
+  bool onoffCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
+    res.success = true;
+    res.message = "Trigger command from the controller sent";
 
-    if(strcmp(req.order.c_str(),"ON") == 0) {
-      res.message = "ON request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"MODE1") == 0) {
-      res.message = "MODE1 request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"MODE2") == 0) {
-      res.message = "MODE2 request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"MODE3") == 0) {
-      res.message = "MODE3 request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"MODE4") == 0) {
-      res.message = "MODE4 request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"MODE5") == 0) {
-      res.message = "MODE5 request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"MODE6") == 0) {
-      res.message = "MODE6 request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"MODE7") == 0) {
-      res.message = "MODE7 request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"MODE8") == 0) {
-      res.message = "MODE8 request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"MODE9") == 0) {
-      res.message = "MODE9 request has been given";
-    }
-    else if(strcmp(req.order.c_str(),"OFF") == 0) {
-      res.message = "OFF request has been given";
+    if(pump_status == 0) {
+      ROS_INFO("Sending ON request\n");
+      serviceRequest.state = "ON";
     }
     else {
-      res.message = "ERR: Request not recognised";
+      ROS_INFO("Sending OFF request\n");
+      serviceRequest.state = "OFF";
+      serviceRequest.mode = 0;
     }
+
     return true;
   }
 
-  
+
+  /*callback for the service client, increment or decrement the motorspeed of the pump*/
+  bool modeCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
+    res.success = true;
+    res.message = "Trigger command from the controller sent";
+
+    if(pump_status == 0) {
+      ROS_WARN("You need to launch the pump before choosing a mode \n");
+    }
+    else if(g_botToTop && pump_status<10 && serviceRequest.mode<10){
+      serviceRequest.mode++;
+    }
+    else if(g_botToTop && pump_status==10) {
+      g_botToTop = false;
+      serviceRequest.mode--;
+    }
+    else if(!g_botToTop && pump_status>0 && serviceRequest.mode>1) {
+      serviceRequest.mode--;
+    }
+    else if(!g_botToTop && pump_status==1) {
+      g_botToTop = true;
+      serviceRequest.mode++;
+    }
+
+    return true;
+  }
+
+
 
 
   /* Callback for the feedback */
-  void feedBack(const thorvald_sprayer::CANFrame &fb) {
-    ROS_INFO("ID : %d\n", fb.id);
-    //pump_status = fb.data[5];
-    pressure = fb.data[0] + pow(2,8)*fb.data[1];
+  void feedBack(const thorvald_base::CANFrame &fb) {
+    //ROS_INFO("ID : %d\n", fb.id);
+    if(fb.id == 389) {
+       pump_status = fb.data[4];
+       pressure = fb.data[0] + pow(2,8)*fb.data[1];
+
+       if(pump_status != 0) {
+          ROS_INFO("Pump status: ON");
+       }
+       else {
+          ROS_INFO("Pump status: OFF");
+       }
+    }
   }
 
-
-  /* Callback for the pressure enslavement */
-  /*
-  void pressureEnslavement(thorvald_sprayer::feedbackData fb) {
-
-    pressure = fb.pressure;
-    ROS_ERROR("Pression fb %d\n", fb.pressure);
-    ROS_ERROR("Pression classe %d\n", pressure);
-    ROS_ERROR("Vitesse moteur %d\n", motorSpeed);
-    if(pressure < DESIRED_PRESSURE){
-      motorSpeed += 50; //valeur a pif a modifier
-      if(motorSpeed < 0){
-        motorSpeed = 0;
-      }
-    }
-    else if(pressure >= DESIRED_PRESSURE){
-      motorSpeed -= 50; //valeur a pif a modifier
-      if(motorSpeed > 1200){
-        motorSpeed = 1200;
-      } //mettre vitesse max du moteur
-    }
-    ROS_ERROR("Nouvelle vitesse moteur %d\n", motorSpeed);
-  }
-  */
 
 
 private:
@@ -145,10 +135,9 @@ private:
   ros::ServiceServer ss_mode;
   ros::ServiceServer ss_onoff;
 
-  thorvald_sprayer::CANFrame msg;
+  thorvald_base::CANFrame msg;
   Request serviceRequest;
-
-  bool tankIsEmpty;
+  int pump_status;
   int pressure;
 };
 
@@ -158,7 +147,7 @@ private:
 
 
 /*Function used to fulfill the message*/
-void ThorvaldSprayer::setMsg(int node_id, const string command[9]) {
+void ThorvaldSprayer::setMsg(const string command[9]) {
 
   int rpdo = 0;
 
@@ -170,10 +159,18 @@ void ThorvaldSprayer::setMsg(int node_id, const string command[9]) {
     ROS_ERROR("Something is wrong with the RPDO used by the command");
   }
 
-  msg.id = rpdo + node_id;
+  msg.id = rpdo + NODE_ID;
 
-  for(int i = 1; i < 9; i++) {
-    msg.data[i-1] = atoi(command[i].c_str());
+  if(serviceRequest.mode > 1) {
+    msg.data[0] = serviceRequest.mode;
+    for(int j = 1; j < 8; j++) {
+      msg.data[j] = 0;
+    }
+  }
+  else {
+    for(int i = 1; i < 9; i++) {
+      msg.data[i-1] = atoi(command[i].c_str());
+    }
   }
 
   msg.length = 8;
@@ -184,38 +181,11 @@ void ThorvaldSprayer::setMsg(int node_id, const string command[9]) {
 /*Function used to create the correct message according to the action asked by the user*/
 void ThorvaldSprayer::process_data(Request request) {
 
-  if(strcmp(request.order.c_str(),"ON") == 0) {
-    setMsg(request.nodeID,commands::ON);
+  if(strcmp(request.state.c_str(),"ON") == 0) {
+    setMsg(commands::ON);
   }
-  else if(strcmp(request.order.c_str(),"MODE1") == 0) {
-    setMsg(request.nodeID,commands::MODE1);
-  }
-  else if(strcmp(request.order.c_str(),"MODE2") == 0) {
-    setMsg(request.nodeID,commands::MODE2);
-  }
-  else if(strcmp(request.order.c_str(),"MODE3") == 0) {
-    setMsg(request.nodeID,commands::MODE3);
-  }
-  else if(strcmp(request.order.c_str(),"MODE4") == 0) {
-    setMsg(request.nodeID,commands::MODE4);
-  }
-  else if(strcmp(request.order.c_str(),"MODE5") == 0) {
-    setMsg(request.nodeID,commands::MODE5);
-  }
-  else if(strcmp(request.order.c_str(),"MODE6") == 0) {
-    setMsg(request.nodeID,commands::MODE6);
-  }
-  else if(strcmp(request.order.c_str(),"MODE7") == 0) {
-    setMsg(request.nodeID,commands::MODE7);
-  }
-  else if(strcmp(request.order.c_str(),"MODE8") == 0) {
-    setMsg(request.nodeID,commands::MODE8);
-  }
-  else if(strcmp(request.order.c_str(),"MODE9") == 0) {
-    setMsg(request.nodeID,commands::MODE9);
-  }
-  else if(strcmp(request.order.c_str(),"OFF") == 0) {
-    setMsg(request.nodeID,commands::OFF);
+  else if(strcmp(request.state.c_str(),"OFF") == 0) {
+    setMsg(commands::OFF);
   }
   else{
     ROS_WARN("/!\\ Doesn't know which action has to be performed /!\\");
@@ -224,9 +194,9 @@ void ThorvaldSprayer::process_data(Request request) {
 
 
 /*Simple procedure which displays some informations*/
-void ThorvaldSprayer::display_infos(thorvald_sprayer::CANFrame msg, int count, Request request) {
+void ThorvaldSprayer::display_infos(thorvald_base::CANFrame msg, int count, Request request) {
   /*Display infos*/
-  if(request.order.c_str() != NULL) {
+  if(request.state.c_str() != NULL) {
     ROS_INFO("#%d Sending data to RPDO1", count);
   }
   else{
@@ -258,9 +228,7 @@ int main(int argc, char **argv) {
 
     sprayer.process_data(sprayer.getRequest());
     sprayer.display_infos(sprayer.getMsg(), count, sprayer.getRequest());
-
     sprayer.getPublisher().publish(sprayer.getMsg());
-
 
     ros::spinOnce();
 

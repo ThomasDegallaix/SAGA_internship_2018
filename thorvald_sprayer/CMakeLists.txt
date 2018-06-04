@@ -56,7 +56,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate services in the 'srv' folder
  add_service_files(
    FILES
-   sprayer_controller.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -206,12 +205,12 @@ target_link_libraries(sprayerV5 ${catkin_LIBRARIES})
 add_dependencies(sprayerV5 thorvald_sprayer_generate_message_cpp)
 add_dependencies(sprayerV5 ${catkin_EXPORTED_TARGETS})
 
-add_executable(sprayerControllerV3 src/sprayer_controller_v3.cpp)
-target_link_libraries(sprayerControllerV3 ${catkin_LIBRARIES})
-add_dependencies(sprayerControllerV3 thorvald_sprayer_generate_message_cpp)
-add_dependencies(sprayerControllerV3 ${catkin_EXPORTED_TARGETS})
+add_executable(sprayerMODE src/sprayer_MODE.cpp)
+target_link_libraries(sprayerMODE ${catkin_LIBRARIES})
+add_dependencies(sprayerMODE thorvald_sprayer_generate_message_cpp)
+add_dependencies(sprayerMODE ${catkin_EXPORTED_TARGETS})
 
-add_executable(sprayerONOFFV1 src/sprayer_ONOFF_v1.cpp)
-target_link_libraries(sprayerONOFFV1  ${catkin_LIBRARIES})
-add_dependencies(sprayerONOFFV1  thorvald_sprayer_generate_message_cpp)
-add_dependencies(sprayerONOFFV1 ${catkin_EXPORTED_TARGETS})
+add_executable(sprayerONOFF src/sprayer_ONOFF.cpp)
+target_link_libraries(sprayerONOFF ${catkin_LIBRARIES})
+add_dependencies(sprayerONOFF thorvald_sprayer_generate_message_cpp)
+add_dependencies(sprayerONOFF ${catkin_EXPORTED_TARGETS})
