@@ -112,7 +112,7 @@ public:
     //ROS_INFO("ID : %d\n", fb.id);
     if(fb.id == 389) {
        pump_status = fb.data[4];
-       pressure = fb.data[0] + pow(2,8)*fb.data[1];
+       //pressure = fb.data[0] + pow(2,8)*fb.data[1];
 
        if(pump_status != 0) {
           ROS_INFO("Pump status: ON");
@@ -220,8 +220,8 @@ int main(int argc, char **argv) {
 
   ThorvaldSprayer sprayer;
 
-  /*Sleep at a rate of 1Hz*/
-  ros::Rate loop_rate(1);
+  /*Sleep at a rate of 10Hz*/
+  ros::Rate loop_rate(10);
 
   int count = 0;
   while(ros::ok()) {
