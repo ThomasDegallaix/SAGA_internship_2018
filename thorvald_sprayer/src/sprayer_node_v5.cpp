@@ -4,6 +4,7 @@
 #include <cstring>
 #include "std_msgs/String.h"
 #include <std_srvs/Trigger.h>
+#include <bitset>
 
 #define NODE_ID 5
 
@@ -109,10 +110,17 @@ public:
 
   /* Callback for the feedback */
   void feedBack(const thorvald_base::CANFrame &fb) {
-    //ROS_INFO("ID : %d\n", fb.id);
     if(fb.id == 389) {
+       pressure = 0;
        pump_status = fb.data[4];
-       //pressure = fb.data[0] + pow(2,8)*fb.data[1];
+
+       int binary[8];
+       decToBinary(fb.data[1],binary);
+       for(int i = 0; i < 8; i++) {
+          pressure += binary[i]*pow(2,15-i); 
+       }
+       pressure += fb.data[0];
+       ROS_INFO("Current pressure: %d",pressure);
 
        if(pump_status != 0) {
           ROS_INFO("Pump status: ON");
@@ -123,6 +131,19 @@ public:
     }
   }
 
+  /*Conversion from decimal to binary*/
+  int* decToBinary(int dec, int binary[8]) {
+     string binarystr = bitset<8>(dec).to_string();
+     for(int  i = 0; i < binarystr.length(); i++) {
+       if(binarystr[i] == 48) {
+          binary[i] = 0;
+       }
+       else if(binarystr[i] == 49) {
+          binary[i] = 1;
+       }
+     }
+     return binary;
+  }
 
 
 private:
@@ -221,7 +242,7 @@ int main(int argc, char **argv) {
   ThorvaldSprayer sprayer;
 
   /*Sleep at a rate of 10Hz*/
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(1);
 
   int count = 0;
   while(ros::ok()) {

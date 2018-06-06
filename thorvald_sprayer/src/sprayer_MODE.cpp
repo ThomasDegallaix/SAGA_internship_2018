@@ -8,7 +8,7 @@
 using namespace std;
 
 
-/*This service was designed to allow the user to stop or start the pump with the xbox controller*/
+/*This service was designed to allow the user to change the motorspeed of the pump with the xbox controller*/
 int main(int argc, char **argv) {
 
   ros::init(argc,argv,"sprayer_MODE");
