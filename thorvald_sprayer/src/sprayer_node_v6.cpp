@@ -7,13 +7,18 @@
 #include <nav_msgs/Odometry.h>
 #include <bitset>
 
+//https://sprayers101.com/selecting-the-best-nozzle-for-the-job/
+
 #define NODE_ID 5
-#define SPRAYER_WIDTH 165 //cm
+#define STICK_WIDTH 165 //cm
 
 using namespace std;
 
 /*List of used TPDO, for more informations look at the roboteq datasheet*/
 enum RPDO {rpdo1=0x200,rpdo2=0x300,rpdo3=0x400,rpdo4=0x500};
+
+/*List of known flow for each mode of the pump in L/h*/
+enum flow {LOW=116,MEDIUM=165,HIGH=212};
 
 /*Structure used to store the service request*/
 struct Request {
@@ -45,9 +50,10 @@ public:
 
     pub_ = n_.advertise<thorvald_base::CANFrame>("/can_frames_device_t",1000);
     sub_pump = n_.subscribe("/can_frames_device_r",1000,&ThorvaldSprayer::pump_feedback,this);
-    sub_velocity = n_.subscribe("/odometry/base_raw",1000;&ThorvaldSprayer::tora_feedback,this);
+    sub_velocity = n_.subscribe("/odometry/base_raw",1000,&ThorvaldSprayer::tora_feedback,this);
     ss_mode = n_.advertiseService("sprayer_MODE",&ThorvaldSprayer::modeCallback,this);
     ss_onoff = n_.advertiseService("sprayer_ONOFF",&ThorvaldSprayer::onoffCallback,this);
+    ss_watering = n_.advertiseService("sprayer_WATERING",&ThorvaldSprayer::wateringCallback,this);
   }
 
   /* Getters and Setters */
@@ -62,12 +68,14 @@ public:
 
   void process_data(Request request);
   void display_infos(thorvald_base::CANFrame msg, int count, Request request);
+  int* decToBinary(int dec, int binary[8]);
+  void displayVolPerEntity(double volume, double spaceBtwEnt, int entNumber);
 
 
   /*Callback used to trigger commands with the xbox controller*/
   bool onoffCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
     res.success = true;
-    res.message = "Trigger command from the controller sent";
+    res.message = "Trigger command for starting/stopping the sprayer sent";
 
     if(pump_status == 0) {
       ROS_INFO("Sending ON request\n");
@@ -83,18 +91,18 @@ public:
   }
 
 
-  /*callback for the service client, increment or decrement the motorspeed of the pump*/
+  /*callback for the service client, increment or decrement the motorspeed of the pump (3 modes)*/
   bool modeCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
     res.success = true;
-    res.message = "Trigger command from the controller sent";
+    res.message = "Trigger command for changing mode sent";
 
     if(pump_status == 0) {
       ROS_WARN("You need to launch the pump before choosing a mode \n");
     }
-    else if(g_botToTop && pump_status<10 && serviceRequest.mode<10){
+    else if(g_botToTop && pump_status<4 && serviceRequest.mode<4){
       serviceRequest.mode++;
     }
-    else if(g_botToTop && pump_status==10) {
+    else if(g_botToTop && pump_status==4) {
       g_botToTop = false;
       serviceRequest.mode--;
     }
@@ -109,7 +117,14 @@ public:
     return true;
   }
 
+  bool wateringCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
+    //use data from configuration file
+    //displayVolPerEntity(double volume, double spaceBtwEnt, int entNumber);
 
+    res.success = true;
+    res.message = "Trigger command for watering sent";
+
+  }
 
 
   /* Callback for the pump feedback */
@@ -121,13 +136,13 @@ public:
        int binary[8];
        decToBinary(fb.data[1],binary);
        for(int i = 0; i < 8; i++) {
-          pressure += binary[i]*pow(2,15-i);
+          pressure += (double)binary[i]*pow(2,15-i);
        }
-       pressure += fb.data[0];
+       pressure += (double)fb.data[0];
 
-       //We receive a pressure value between 0 and 10V and the sensor can measure from 0 to 6 bar
-       pressure = (pressure*6)/10000;
-       ROS_INFO("Current pressure: %d",pressure);
+       //We receive a pressure value between 0 and 10000mV and the sensor can measure from 0 to 6 bar
+       pressure = (pressure*6.0)/10000.0;
+       ROS_INFO("Current pressure: %lf",pressure);
 
        if(pump_status != 0) {
           ROS_INFO("Pump status: ON");
@@ -135,14 +150,23 @@ public:
        else {
           ROS_INFO("Pump status: OFF");
        }
+
+       //to be modified eventually
+       /*Check if the tank is empty*/
+       if(pump_status > 1 && pressure < 1.5) {
+         serviceRequest.state = "OFF";
+         serviceRequest.mode = 0;
+         ROS_ERROR("The tank must be empty, refill it and restart")
+       }
     }
   }
+
 
   //http://docs.ros.org/kinetic/api/nav_msgs/html/msg/Odometry.html
   //Twist for velocity => maybe look at linear x and something else if a rotation occurs
   /* Callback for tora's feedback */
   void tora_feedback(const nav_msgs::Odometry &fb) {
-    tora_velocity = fb.twist.twist.linear.x; //Unité ?
+    tora_velocity = fb.twist.twist.linear.x; //m/s   => 1 m/s should be fine
   }
 
 
@@ -163,9 +187,9 @@ private:
   int pump_status;
 
   int sprayer_width;
-  int pressure;
-  int tora_velocity;
-  int flow;
+  double pressure;
+  double tora_velocity;
+  double flow;
 
 };
 
@@ -221,6 +245,39 @@ void ThorvaldSprayer::process_data(Request request) {
 }
 
 
+//UTILISER ACTIONLIB  http://wiki.ros.org/actionlib/Tutorials
+/*Function used for making the robot watering a certain amount of plants disposed at equal distance*/
+/*Return true at the end of the process*/
+bool ThorvaldSprayer::displayVolPerEntity(double volume, double spaceBtwEnt, int entNumber) {
+  double distance_traveled = 0;
+
+  if(pump_status != 0) {
+    for(int i = 0; i < entNumber; i++) {
+      //do something to go forward for spaceBtwEnt meters = publis h the twist
+
+      //display an volume for a certain duration according to the current flow
+    }
+  }
+  return true;
+}
+
+/*Conversion from decimal to binary*/
+int* ThorvaldSprayer::decToBinary(int dec, int binary[8]) {
+   string binarystr = bitset<8>(dec).to_string();
+   for(int  i = 0; i < binarystr.length(); i++) {
+     //ASCII value for '0'
+     if(binarystr[i] == 48) {
+        binary[i] = 0;
+     }
+     //ASCII value for '1'
+     else if(binarystr[i] == 49) {
+        binary[i] = 1;
+     }
+   }
+   return binary;
+}
+
+
 /*Simple procedure which displays some informations*/
 void ThorvaldSprayer::display_infos(thorvald_base::CANFrame msg, int count, Request request) {
   /*Display infos*/
@@ -235,28 +292,6 @@ void ThorvaldSprayer::display_infos(thorvald_base::CANFrame msg, int count, Requ
   ROS_INFO("Data: [%d,%d,%d,%d,%d,%d,%d,%d]", msg.data[0], msg.data[1], msg.data[2], msg.data[3], msg.data[4], msg.data[5], msg.data[6], msg.data[7]);
 }
 
-
-
-
-/*##########################################  Utility functions  ##########################################*/
-
-
-
-/*Conversion from decimal to binary*/
-int* decToBinary(int dec, int binary[8]) {
-   string binarystr = bitset<8>(dec).to_string();
-   for(int  i = 0; i < binarystr.length(); i++) {
-     //ASCII value for '0'
-     if(binarystr[i] == 48) {
-        binary[i] = 0;
-     }
-     //ASCII value for '1'
-     else if(binarystr[i] == 49) {
-        binary[i] = 1;
-     }
-   }
-   return binary;
-}
 
 
 
@@ -277,7 +312,7 @@ int main(int argc, char **argv) {
   while(ros::ok()) {
 
     sprayer.process_data(sprayer.getRequest());
-    sprayer.display_infos(sprayer.getMsg(), count, sprayer.getRequest());
+    //sprayer.display_infos(sprayer.getMsg(), count, sprayer.getRequest());
     sprayer.getPublisher().publish(sprayer.getMsg());
 
     ros::spinOnce();

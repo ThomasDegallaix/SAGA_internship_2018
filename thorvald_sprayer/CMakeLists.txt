@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
   genmsg
+  actionlib_msgs 
+  actionlib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -59,16 +61,17 @@ find_package(catkin REQUIRED COMPONENTS
  )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+add_action_files(
+   DIRECTORY 
+   action
+   FILES
+)
 
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
    std_msgs
+   actionlib_msgs
  )
 
 ################################################
@@ -200,10 +203,10 @@ include_directories(
 catkin_package()
 
 
-add_executable(sprayerV5 src/sprayer_node_v5.cpp)
-target_link_libraries(sprayerV5 ${catkin_LIBRARIES})
-add_dependencies(sprayerV5 thorvald_sprayer_generate_message_cpp)
-add_dependencies(sprayerV5 ${catkin_EXPORTED_TARGETS})
+add_executable(sprayerV6 src/sprayer_node_v6.cpp)
+target_link_libraries(sprayerV6 ${catkin_LIBRARIES})
+add_dependencies(sprayerV6 thorvald_sprayer_generate_message_cpp)
+add_dependencies(sprayerV6 ${catkin_EXPORTED_TARGETS})
 
 add_executable(sprayerMODE src/sprayer_MODE.cpp)
 target_link_libraries(sprayerMODE ${catkin_LIBRARIES})

@@ -1,14 +1,7 @@
 <launch>
-		<arg name="robot_model" value="$(find thorvald_model)/config/thorvald_ii_2wd0ws_tora/thorvald_ii_2wd0ws_tora.yaml"/>
-		<arg name="model_extras" value="$(find thorvald_model)/urdf/thorvald_ii_tora/tora_extras.xacro"/>
-		<arg name="simple_sim" value="True"/>
 
-		<include file="$(find thorvald_bringup)/launch/thorvald_bringup.launch">
-			<arg name="robot_model" value="$(arg robot_model)"/>
-			<arg name="model_extras" value="$(arg model_extras)"/>
-			<arg name="simple_sim" value="$(arg simple_sim)"/>
-		</include>
-
-		<node pkg="thorvald_sprayer" name="Sprayer" type="sprayerV5"/>
+		<node pkg="thorvald_sprayer" name="Sprayer" type="sprayerV6">
+			<rosparam command="load" file="$(find thorvald_sprayer)/yamlfile"/>
+		</node>
 
 </launch>
