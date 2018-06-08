@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   genmsg
   actionlib_msgs 
   actionlib
+  nav_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -62,9 +63,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate actions in the 'action' folder
 add_action_files(
-   DIRECTORY 
-   action
    FILES
+   watering.action
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -72,6 +72,7 @@ add_action_files(
    DEPENDENCIES
    std_msgs
    actionlib_msgs
+   nav_msgs
  )
 
 ################################################
@@ -106,8 +107,8 @@ add_action_files(
 #catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES thorvald_sprayer
-#  CATKIN_DEPENDS roscpp std_msgs message_runtime
-#  DEPENDS system_lib
+#  CATKIN_DEPENDS roscpp std_msgs message_runtime actionlib_msgs
+#  DEPENDS system_lib 
 #)
 
 ###########
@@ -208,12 +209,12 @@ target_link_libraries(sprayerV6 ${catkin_LIBRARIES})
 add_dependencies(sprayerV6 thorvald_sprayer_generate_message_cpp)
 add_dependencies(sprayerV6 ${catkin_EXPORTED_TARGETS})
 
-add_executable(sprayerMODE src/sprayer_MODE.cpp)
-target_link_libraries(sprayerMODE ${catkin_LIBRARIES})
-add_dependencies(sprayerMODE thorvald_sprayer_generate_message_cpp)
-add_dependencies(sprayerMODE ${catkin_EXPORTED_TARGETS})
+add_executable(sprayerTRIGGER src/sprayer_trigger.cpp)
+target_link_libraries(sprayerTRIGGER ${catkin_LIBRARIES})
+add_dependencies(sprayerTRIGGER thorvald_sprayer_generate_message_cpp)
+add_dependencies(sprayerTRIGGER ${catkin_EXPORTED_TARGETS})
 
-add_executable(sprayerONOFF src/sprayer_ONOFF.cpp)
-target_link_libraries(sprayerONOFF ${catkin_LIBRARIES})
-add_dependencies(sprayerONOFF thorvald_sprayer_generate_message_cpp)
-add_dependencies(sprayerONOFF ${catkin_EXPORTED_TARGETS})
+add_executable(watering src/watering_trigger.cpp)
+target_link_libraries(watering ${catkin_LIBRARIES})
+add_dependencies(watering thorvald_sprayer_generate_message_cpp)
+add_dependencies(watering ${catkin_EXPORTED_TARGETS})

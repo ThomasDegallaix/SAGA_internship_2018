@@ -1,0 +1,8 @@
+#goal definition
+nav_msgs/Odometry order
+---
+#result definition
+uint32 result
+---
+#feedback
+uint32 fb

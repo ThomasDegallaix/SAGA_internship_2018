@@ -1,13 +1,13 @@
 #include "ros/ros.h"
-#include <thorvald_base/CANFrame.h>
+#include <thorvald_sprayer/CANFrame.h>
 #include "commands.h"
 #include <cstring>
 #include "std_msgs/String.h"
 #include <std_srvs/Trigger.h>
 #include <nav_msgs/Odometry.h>
 #include <bitset>
+#include <ctime>
 
-//https://sprayers101.com/selecting-the-best-nozzle-for-the-job/
 
 #define NODE_ID 5
 #define STICK_WIDTH 165 //cm
@@ -17,6 +17,7 @@ using namespace std;
 /*List of used TPDO, for more informations look at the roboteq datasheet*/
 enum RPDO {rpdo1=0x200,rpdo2=0x300,rpdo3=0x400,rpdo4=0x500};
 
+//https://sprayers101.com/selecting-the-best-nozzle-for-the-job/
 /*List of known flow for each mode of the pump in L/h*/
 enum flow {LOW=116,MEDIUM=165,HIGH=212};
 
@@ -46,20 +47,19 @@ public:
     }
     serviceRequest.state = "OFF";
     serviceRequest.mode = 1;
-    sprayer_width = SPRAYER_WIDTH;
 
-    pub_ = n_.advertise<thorvald_base::CANFrame>("/can_frames_device_t",1000);
+    pub_ = n_.advertise<thorvald_sprayer::CANFrame>("/can_frames_device_t",1000);
     sub_pump = n_.subscribe("/can_frames_device_r",1000,&ThorvaldSprayer::pump_feedback,this);
     sub_velocity = n_.subscribe("/odometry/base_raw",1000,&ThorvaldSprayer::tora_feedback,this);
     ss_mode = n_.advertiseService("sprayer_MODE",&ThorvaldSprayer::modeCallback,this);
     ss_onoff = n_.advertiseService("sprayer_ONOFF",&ThorvaldSprayer::onoffCallback,this);
-    ss_watering = n_.advertiseService("sprayer_WATERING",&ThorvaldSprayer::wateringCallback,this);
+    ss_watering = n_.advertiseService("watering",&ThorvaldSprayer::wateringCallback,this);
   }
 
   /* Getters and Setters */
   Request getRequest() const { return serviceRequest; };
   ros::Publisher getPublisher() const { return pub_; };
-  thorvald_base::CANFrame getMsg() { return msg; };
+  thorvald_sprayer::CANFrame getMsg() { return msg; };
   int getPressure() { return pressure; };
   void setMsg(const string command[9]);
 
@@ -67,9 +67,9 @@ public:
   /* class member functions */
 
   void process_data(Request request);
-  void display_infos(thorvald_base::CANFrame msg, int count, Request request);
+  void display_infos(thorvald_sprayer::CANFrame msg, int count, Request request);
   int* decToBinary(int dec, int binary[8]);
-  void displayVolPerEntity(double volume, double spaceBtwEnt, int entNumber);
+  bool watering(double desired_volume, int mode);
 
 
   /*Callback used to trigger commands with the xbox controller*/
@@ -117,18 +117,22 @@ public:
     return true;
   }
 
+  //####################################################################################################
+
   bool wateringCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
-    //use data from configuration file
-    //displayVolPerEntity(double volume, double spaceBtwEnt, int entNumber);
-
     res.success = true;
-    res.message = "Trigger command for watering sent";
+    res.message = "Trigger command for changing mode sent";
 
+    watering(3.0, 4);
+
+    return true;
   }
+
+  //###################################################################################################
 
 
   /* Callback for the pump feedback */
-  void pump_feedback(const thorvald_base::CANFrame &fb) {
+  void pump_feedback(const thorvald_sprayer::CANFrame &fb) {
     if(fb.id == 389) {
        pressure = 0;
        pump_status = fb.data[4];
@@ -142,7 +146,7 @@ public:
 
        //We receive a pressure value between 0 and 10000mV and the sensor can measure from 0 to 6 bar
        pressure = (pressure*6.0)/10000.0;
-       ROS_INFO("Current pressure: %lf",pressure);
+       ROS_INFO("Current pressure: %0.3f",pressure);
 
        if(pump_status != 0) {
           ROS_INFO("Pump status: ON");
@@ -151,13 +155,25 @@ public:
           ROS_INFO("Pump status: OFF");
        }
 
+       //TO BE MODIFIED WHEN WELL BE USING MORE PRECISE VALUES
+       switch(pump_status) {
+         case(2) : { flow = (double)LOW; break; }
+         case(3) : { flow = (double)MEDIUM; break; }
+         case(4) : { flow = (double)HIGH; break; }
+         default : { flow = 0.0; break; }
+       }
+       ROS_INFO("Current flow: %0.2f", flow);
+
        //to be modified eventually
        /*Check if the tank is empty*/
+       /*
        if(pump_status > 1 && pressure < 1.5) {
          serviceRequest.state = "OFF";
          serviceRequest.mode = 0;
-         ROS_ERROR("The tank must be empty, refill it and restart")
-       }
+         ROS_ERROR("The tank must be empty, refill it and restart");
+       }*/
+
+
     }
   }
 
@@ -181,12 +197,12 @@ private:
   ros::Subscriber sub_velocity;
   ros::ServiceServer ss_mode;
   ros::ServiceServer ss_onoff;
+  ros::ServiceServer ss_watering;
 
-  thorvald_base::CANFrame msg;
+  thorvald_sprayer::CANFrame msg;
   Request serviceRequest;
   int pump_status;
 
-  int sprayer_width;
   double pressure;
   double tora_velocity;
   double flow;
@@ -195,7 +211,7 @@ private:
 
 
 
-/*##########################################  CLASS MEMBER FUNCTION ##########################################*/
+/*##########################################  CLASS MEMBER FUNCTIONS  ##########################################*/
 
 
 /*Function used to fulfill the message*/
@@ -244,22 +260,43 @@ void ThorvaldSprayer::process_data(Request request) {
   }
 }
 
-
+  //####################################################################################################
 //UTILISER ACTIONLIB  http://wiki.ros.org/actionlib/Tutorials
-/*Function used for making the robot watering a certain amount of plants disposed at equal distance*/
+/*Function used for making the robot watering a desired volume*/
 /*Return true at the end of the process*/
-bool ThorvaldSprayer::displayVolPerEntity(double volume, double spaceBtwEnt, int entNumber) {
-  double distance_traveled = 0;
+bool ThorvaldSprayer::watering(double desired_volume, int mode) { //technically the flow should be preempt if I use an actionlib structure later
+  clock_t start;
+  double uptime;
 
-  if(pump_status != 0) {
-    for(int i = 0; i < entNumber; i++) {
-      //do something to go forward for spaceBtwEnt meters = publis h the twist
-
-      //display an volume for a certain duration according to the current flow
-    }
+  if(serviceRequest.state == "OFF") {
+    ROS_WARN("You need to turn on the pump before starting watering");
+    return false;
   }
+
+  flow = flow/3600; //We need to have the flow in L/s
+  double watering_duration = desired_volume/flow;
+
+  ROS_INFO("The watering task will last for %0.2f s", watering_duration);
+
+
+  start = clock();
+  while(uptime < watering_duration && serviceRequest.state == "ON") {
+    serviceRequest.mode = mode;
+    if(serviceRequest.state == "OFF") {
+      ROS_ERROR("The watering process has been stopped");
+      return false;
+    }
+
+    uptime = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+  }
+
+  serviceRequest.state = "ON";
+  serviceRequest.mode = 1;
+
   return true;
 }
+  //####################################################################################################
+
 
 /*Conversion from decimal to binary*/
 int* ThorvaldSprayer::decToBinary(int dec, int binary[8]) {
@@ -279,7 +316,7 @@ int* ThorvaldSprayer::decToBinary(int dec, int binary[8]) {
 
 
 /*Simple procedure which displays some informations*/
-void ThorvaldSprayer::display_infos(thorvald_base::CANFrame msg, int count, Request request) {
+void ThorvaldSprayer::display_infos(thorvald_sprayer::CANFrame msg, int count, Request request) {
   /*Display infos*/
   if(request.state.c_str() != NULL) {
     ROS_INFO("#%d Sending data to RPDO1", count);
