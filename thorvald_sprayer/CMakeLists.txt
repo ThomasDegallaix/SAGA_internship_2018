@@ -64,7 +64,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate actions in the 'action' folder
 add_action_files(
    FILES
-   watering.action
+   Watering.action
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -218,3 +218,5 @@ add_executable(watering src/watering_trigger.cpp)
 target_link_libraries(watering ${catkin_LIBRARIES})
 add_dependencies(watering thorvald_sprayer_generate_message_cpp)
 add_dependencies(watering ${catkin_EXPORTED_TARGETS})
+
+

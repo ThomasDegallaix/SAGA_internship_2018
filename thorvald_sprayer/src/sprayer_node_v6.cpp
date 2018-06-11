@@ -18,8 +18,8 @@ using namespace std;
 enum RPDO {rpdo1=0x200,rpdo2=0x300,rpdo3=0x400,rpdo4=0x500};
 
 //https://sprayers101.com/selecting-the-best-nozzle-for-the-job/
-/*List of known flow for each mode of the pump in L/h*/
-enum flow {LOW=116,MEDIUM=165,HIGH=212};
+/*List of known flow for each mode of the pump in L/h and for 4 nozzles*/
+enum flow {LOW=141,MEDIUM=150,HIGH=156};
 
 /*Structure used to store the service request*/
 struct Request {
@@ -47,6 +47,7 @@ public:
     }
     serviceRequest.state = "OFF";
     serviceRequest.mode = 1;
+    launch = false;
 
     pub_ = n_.advertise<thorvald_sprayer::CANFrame>("/can_frames_device_t",1000);
     sub_pump = n_.subscribe("/can_frames_device_r",1000,&ThorvaldSprayer::pump_feedback,this);
@@ -62,6 +63,7 @@ public:
   thorvald_sprayer::CANFrame getMsg() { return msg; };
   int getPressure() { return pressure; };
   void setMsg(const string command[9]);
+  bool shouldLaunch() { return launch; };
 
 
   /* class member functions */
@@ -69,7 +71,7 @@ public:
   void process_data(Request request);
   void display_infos(thorvald_sprayer::CANFrame msg, int count, Request request);
   int* decToBinary(int dec, int binary[8]);
-  bool watering(double desired_volume, int mode);
+  bool watering(double desired_volume, int mode, bool launch);
 
 
   /*Callback used to trigger commands with the xbox controller*/
@@ -123,7 +125,12 @@ public:
     res.success = true;
     res.message = "Trigger command for changing mode sent";
 
-    watering(3.0, 4);
+    if(!launch) {
+      launch = true;
+    }
+    else {
+      launch = false;
+    }
 
     return true;
   }
@@ -207,6 +214,8 @@ private:
   double tora_velocity;
   double flow;
 
+  bool launch;
+
 };
 
 
@@ -261,39 +270,46 @@ void ThorvaldSprayer::process_data(Request request) {
 }
 
   //####################################################################################################
-//UTILISER ACTIONLIB  http://wiki.ros.org/actionlib/Tutorials
+//UTILISER ACTIONLIB  http://wiki.ros.org/actionlib/Tutorials      http://wiki.ros.org/actionlib/DetailedDescription
 /*Function used for making the robot watering a desired volume*/
 /*Return true at the end of the process*/
-bool ThorvaldSprayer::watering(double desired_volume, int mode) { //technically the flow should be preempt if I use an actionlib structure later
-  clock_t start;
-  double uptime;
+bool ThorvaldSprayer::watering(double desired_volume, int mode, bool launch) { //technically the flow should be preempt if I use an actionlib structure later
 
-  if(serviceRequest.state == "OFF") {
-    ROS_WARN("You need to turn on the pump before starting watering");
-    return false;
-  }
+  if(launch) {
+    clock_t start;
+    double uptime;
 
-  flow = flow/3600; //We need to have the flow in L/s
-  double watering_duration = desired_volume/flow;
-
-  ROS_INFO("The watering task will last for %0.2f s", watering_duration);
-
-
-  start = clock();
-  while(uptime < watering_duration && serviceRequest.state == "ON") {
-    serviceRequest.mode = mode;
     if(serviceRequest.state == "OFF") {
-      ROS_ERROR("The watering process has been stopped");
+      ROS_WARN("You need to turn on the pump before starting watering");
       return false;
     }
 
-    uptime = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+    serviceRequest.mode = mode;
+    double flow_sec = 363/3600; //We need to have the flow in L/s A RECALCULER SANS LES ROBINETS
+    double watering_duration = desired_volume/flow_sec;
+
+    ROS_INFO("The watering task will last for %0.2f s", watering_duration);
+
+    start = clock();
+    while(uptime < watering_duration && serviceRequest.state == "ON") {
+
+      if(serviceRequest.state == "OFF") {
+        ROS_ERROR("The watering process has been stopped");
+        return false;
+      }
+
+      uptime = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+    }
+
+    serviceRequest.state = "ON";
+    serviceRequest.mode = 1;
+
+    return true;
+  }
+  else {
+    return false;
   }
 
-  serviceRequest.state = "ON";
-  serviceRequest.mode = 1;
-
-  return true;
 }
   //####################################################################################################
 
@@ -349,6 +365,7 @@ int main(int argc, char **argv) {
   while(ros::ok()) {
 
     sprayer.process_data(sprayer.getRequest());
+    sprayer.watering(3.0,4,sprayer.shouldLaunch());
     //sprayer.display_infos(sprayer.getMsg(), count, sprayer.getRequest());
     sprayer.getPublisher().publish(sprayer.getMsg());
 
