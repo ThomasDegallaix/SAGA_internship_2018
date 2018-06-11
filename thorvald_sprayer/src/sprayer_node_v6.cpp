@@ -63,7 +63,7 @@ public:
   thorvald_sprayer::CANFrame getMsg() { return msg; };
   int getPressure() { return pressure; };
   void setMsg(const string command[9]);
-  bool shouldLaunch() { return launch; };
+  bool isLaunched() { return launch; };
 
 
   /* class member functions */
@@ -288,7 +288,7 @@ bool ThorvaldSprayer::watering(double desired_volume, int mode, bool launch) { /
     double flow_sec = 363/3600; //We need to have the flow in L/s A RECALCULER SANS LES ROBINETS
     double watering_duration = desired_volume/flow_sec;
 
-    ROS_INFO("The watering task will last for %0.2f s", watering_duration);
+    ROS_INFO("The watering task will last for %lf s", watering_duration);
 
     start = clock();
     while(uptime < watering_duration && serviceRequest.state == "ON") {
@@ -365,7 +365,7 @@ int main(int argc, char **argv) {
   while(ros::ok()) {
 
     sprayer.process_data(sprayer.getRequest());
-    sprayer.watering(3.0,4,sprayer.shouldLaunch());
+    sprayer.watering(3.0,4,sprayer.isLaunched());
     //sprayer.display_infos(sprayer.getMsg(), count, sprayer.getRequest());
     sprayer.getPublisher().publish(sprayer.getMsg());
 
