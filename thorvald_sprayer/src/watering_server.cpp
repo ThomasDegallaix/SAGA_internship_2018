@@ -87,8 +87,15 @@ int main(int argc, char **argv)  {
   ros::init(argc,argv,"watering_server");
 
   WateringAction watering("watering");
+
+  /*Sleep at a rate of 10Hz*/
+  ros::Rate loop_rate(10);
+
   watering.getPublisher().publish(watering.getMsg());
-  ros::spin();
+
+  ros::spinOnce();
+
+  loop_rate.sleep();
 
   return 0;
 }
