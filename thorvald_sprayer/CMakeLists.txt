@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   nav_msgs
 )
+find_package(Boost REQUIRED COMPONENTS system)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -206,17 +207,16 @@ catkin_package()
 
 add_executable(sprayerV6 src/sprayer_node_v6.cpp)
 target_link_libraries(sprayerV6 ${catkin_LIBRARIES})
-add_dependencies(sprayerV6 thorvald_sprayer_generate_message_cpp)
 add_dependencies(sprayerV6 ${catkin_EXPORTED_TARGETS})
 
 add_executable(sprayerTRIGGER src/sprayer_trigger.cpp)
 target_link_libraries(sprayerTRIGGER ${catkin_LIBRARIES})
-add_dependencies(sprayerTRIGGER thorvald_sprayer_generate_message_cpp)
 add_dependencies(sprayerTRIGGER ${catkin_EXPORTED_TARGETS})
 
-add_executable(watering src/watering_trigger.cpp)
-target_link_libraries(watering ${catkin_LIBRARIES})
-add_dependencies(watering thorvald_sprayer_generate_message_cpp)
-add_dependencies(watering ${catkin_EXPORTED_TARGETS})
+add_executable(wateringServer src/watering_server.cpp)
+target_link_libraries(wateringServer ${catkin_LIBRARIES})
+add_dependencies(wateringServer ${catkin_EXPORTED_TARGETS})
 
-
+add_executable(wateringClient src/watering_client.cpp)
+target_link_libraries(wateringClient ${catkin_LIBRARIES})
+add_dependencies(wateringServer ${catkin_EXPORTED_TARGETS})

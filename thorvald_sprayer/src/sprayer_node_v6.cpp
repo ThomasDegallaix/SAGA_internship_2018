@@ -5,8 +5,8 @@
 #include "std_msgs/String.h"
 #include <std_srvs/Trigger.h>
 #include <nav_msgs/Odometry.h>
+#include <std_msgs/Int8.h>
 #include <bitset>
-#include <ctime>
 
 
 #define NODE_ID 5
@@ -47,14 +47,16 @@ public:
     }
     serviceRequest.state = "OFF";
     serviceRequest.mode = 1;
-    launch = false;
 
     pub_ = n_.advertise<thorvald_sprayer::CANFrame>("/can_frames_device_t",1000);
     sub_pump = n_.subscribe("/can_frames_device_r",1000,&ThorvaldSprayer::pump_feedback,this);
     sub_velocity = n_.subscribe("/odometry/base_raw",1000,&ThorvaldSprayer::tora_feedback,this);
+    sub_tasks = n_.subscribe("/sprayer_tasks",1000,&ThorvaldSprayer::task_callback,this);
     ss_mode = n_.advertiseService("sprayer_MODE",&ThorvaldSprayer::modeCallback,this);
     ss_onoff = n_.advertiseService("sprayer_ONOFF",&ThorvaldSprayer::onoffCallback,this);
-    ss_watering = n_.advertiseService("watering",&ThorvaldSprayer::wateringCallback,this);
+  }
+
+  ~ThorvaldSprayer(void) {
   }
 
   /* Getters and Setters */
@@ -63,7 +65,6 @@ public:
   thorvald_sprayer::CANFrame getMsg() { return msg; };
   int getPressure() { return pressure; };
   void setMsg(const string command[9]);
-  bool isLaunched() { return launch; };
 
 
   /* class member functions */
@@ -71,7 +72,6 @@ public:
   void process_data(Request request);
   void display_infos(thorvald_sprayer::CANFrame msg, int count, Request request);
   int* decToBinary(int dec, int binary[8]);
-  bool watering(double desired_volume, int mode, bool launch);
 
 
   /*Callback used to trigger commands with the xbox controller*/
@@ -104,7 +104,7 @@ public:
     else if(g_botToTop && pump_status<4 && serviceRequest.mode<4){
       serviceRequest.mode++;
     }
-    else if(g_botToTop && pump_status==4) {
+    else if(g_botToTop && pump_status==4) {  ros::ServiceServer ss_watering;
       g_botToTop = false;
       serviceRequest.mode--;
     }
@@ -118,24 +118,6 @@ public:
 
     return true;
   }
-
-  //####################################################################################################
-
-  bool wateringCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
-    res.success = true;
-    res.message = "Trigger command for changing mode sent";
-
-    if(!launch) {
-      launch = true;
-    }
-    else {
-      launch = false;
-    }
-
-    return true;
-  }
-
-  //###################################################################################################
 
 
   /* Callback for the pump feedback */
@@ -184,12 +166,27 @@ public:
     }
   }
 
-
   //http://docs.ros.org/kinetic/api/nav_msgs/html/msg/Odometry.html
   //Twist for velocity => maybe look at linear x and something else if a rotation occurs
   /* Callback for tora's feedback */
   void tora_feedback(const nav_msgs::Odometry &fb) {
     tora_velocity = fb.twist.twist.linear.x; //m/s   => 1 m/s should be fine
+  }
+
+  /*Callback for every tasks send to the pump*/
+  void task_callback(const std_msgs::Int8 &task_msg) {
+    switch(task_msg.data) {
+      case(1) : {
+        setMsg(commands::ON);
+        serviceRequest.mode = 4;
+        break;
+      }
+      default : {
+        setMsg(commands::ON);
+        serviceRequest.mode = 1;
+        break;
+      }
+    }
   }
 
 
@@ -202,9 +199,9 @@ private:
   ros::Publisher pub_;
   ros::Subscriber sub_pump;
   ros::Subscriber sub_velocity;
+  ros::Subscriber sub_tasks;
   ros::ServiceServer ss_mode;
   ros::ServiceServer ss_onoff;
-  ros::ServiceServer ss_watering;
 
   thorvald_sprayer::CANFrame msg;
   Request serviceRequest;
@@ -213,9 +210,6 @@ private:
   double pressure;
   double tora_velocity;
   double flow;
-
-  bool launch;
-
 };
 
 
@@ -269,50 +263,6 @@ void ThorvaldSprayer::process_data(Request request) {
   }
 }
 
-  //####################################################################################################
-//UTILISER ACTIONLIB  http://wiki.ros.org/actionlib/Tutorials      http://wiki.ros.org/actionlib/DetailedDescription
-/*Function used for making the robot watering a desired volume*/
-/*Return true at the end of the process*/
-bool ThorvaldSprayer::watering(double desired_volume, int mode, bool launch) { //technically the flow should be preempt if I use an actionlib structure later
-
-  if(launch) {
-    clock_t start;
-    double uptime;
-
-    if(serviceRequest.state == "OFF") {
-      ROS_WARN("You need to turn on the pump before starting watering");
-      return false;
-    }
-
-    serviceRequest.mode = mode;
-    double flow_sec = 363/3600; //We need to have the flow in L/s A RECALCULER SANS LES ROBINETS
-    double watering_duration = desired_volume/flow_sec;
-
-    ROS_INFO("The watering task will last for %lf s", watering_duration);
-
-    start = clock();
-    while(uptime < watering_duration && serviceRequest.state == "ON") {
-
-      if(serviceRequest.state == "OFF") {
-        ROS_ERROR("The watering process has been stopped");
-        return false;
-      }
-
-      uptime = ( clock() - start ) / (double) CLOCKS_PER_SEC;
-    }
-
-    serviceRequest.state = "ON";
-    serviceRequest.mode = 1;
-
-    return true;
-  }
-  else {
-    return false;
-  }
-
-}
-  //####################################################################################################
-
 
 /*Conversion from decimal to binary*/
 int* ThorvaldSprayer::decToBinary(int dec, int binary[8]) {
@@ -365,7 +315,6 @@ int main(int argc, char **argv) {
   while(ros::ok()) {
 
     sprayer.process_data(sprayer.getRequest());
-    sprayer.watering(3.0,4,sprayer.isLaunched());
     //sprayer.display_infos(sprayer.getMsg(), count, sprayer.getRequest());
     sprayer.getPublisher().publish(sprayer.getMsg());
 

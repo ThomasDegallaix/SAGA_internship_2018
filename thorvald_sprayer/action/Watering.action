@@ -1,9 +1,8 @@
 #goal definition
-float64 order
+float64 duration_
 ---
 #result definition
-uint32 result
+float64 result
 ---
 #feedback
-uint32 nbOfPlantingDone
-float64 distanceTraveled
+uint64 performing_task
