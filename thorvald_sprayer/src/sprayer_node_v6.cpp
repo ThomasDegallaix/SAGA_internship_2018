@@ -51,7 +51,7 @@ public:
     pub_ = n_.advertise<thorvald_sprayer::CANFrame>("/can_frames_device_t",1000);
     sub_pump = n_.subscribe("/can_frames_device_r",1000,&ThorvaldSprayer::pump_feedback,this);
     sub_velocity = n_.subscribe("/odometry/base_raw",1000,&ThorvaldSprayer::tora_feedback,this);
-    sub_tasks = n_.subscribe("/sprayer_tasks",1000,&ThorvaldSprayer::task_callback,this);
+    sub_tasks = n_.subscribe("/sprayer_task",1000,&ThorvaldSprayer::task_callback,this);
     ss_mode = n_.advertiseService("sprayer_MODE",&ThorvaldSprayer::modeCallback,this);
     ss_onoff = n_.advertiseService("sprayer_ONOFF",&ThorvaldSprayer::onoffCallback,this);
   }
@@ -175,17 +175,13 @@ public:
 
   /*Callback for every tasks send to the pump*/
   void task_callback(const std_msgs::Int8 &task_msg) {
-    switch(task_msg.data) {
-      case(1) : {
-        setMsg(commands::ON);
-        serviceRequest.mode = 4;
-        break;
-      }
-      default : {
-        setMsg(commands::ON);
-        serviceRequest.mode = 1;
-        break;
-      }
+    if(task_msg.data == 1) {
+      setMsg(commands::ON);
+      serviceRequest.mode = 4;
+    }
+    else {
+      setMsg(commands::ON);
+      serviceRequest.mode = 1;
     }
   }
 
@@ -304,7 +300,7 @@ void ThorvaldSprayer::display_infos(thorvald_sprayer::CANFrame msg, int count, R
 int main(int argc, char **argv) {
 
   /*Initializing the node*/
-  ros::init(argc,argv,"sprayer_node_v5");
+  ros::init(argc,argv,"sprayer_node_v6");
 
   ThorvaldSprayer sprayer;
 

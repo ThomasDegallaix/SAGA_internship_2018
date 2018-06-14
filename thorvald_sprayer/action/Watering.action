@@ -2,7 +2,7 @@
 float64 duration_
 ---
 #result definition
-float64 result
+uint32 result
 ---
 #feedback
-uint64 performing_task
+uint32 performing_task

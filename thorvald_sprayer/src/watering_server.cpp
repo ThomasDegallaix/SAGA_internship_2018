@@ -17,16 +17,15 @@ public :
     as_(n_, name, boost::bind(&WateringAction::executeCB, this, _1), false),
     action_name_(name)
   {
-    pub_ = n_.advertise<std_msgs::Int8>("/sprayer_tasks",1000);
-
     as_.start();
+    pub_ = n_.advertise<std_msgs::Int8>("/sprayer_task",1000);
   }
 
   ~WateringAction(void) {
   }
 
   ros::Publisher getPublisher() const { return pub_; };
-  std_msgs::Int8 getMsg() { return task_msg; };
+  std_msgs::Int8 getMsg() { return msg; };
 
   /*Execute callback: Send a start request to the pump and then wait for a certain amount of time, then send a stop request*/
   void executeCB(const thorvald_sprayer::WateringGoalConstPtr& goal) {
@@ -39,7 +38,6 @@ public :
     ROS_INFO("Processing task...");
 
     start = clock();
-    task_msg.data = 1;
 
     while(uptime < watering_duration) {
 
@@ -53,11 +51,15 @@ public :
 
       uptime = ( clock() - start ) / (double) CLOCKS_PER_SEC;
       //ROS_INFO("Uptime %lf", uptime);
-      feedback_.performing_task =  (uptime*100)/watering_duration;
-      as_.publishFeedback(feedback_);
+      //feedback_.performing_task =  ((int)uptime*100)/watering_duration; //Doesn't work properly, needs some adjustments
+      //as_.publishFeedback(feedback_);
+      msg.data = 1;
+      pub_.publish(msg);
     }
 
-    task_msg.data = 0;
+    msg.data = 0;
+    pub_.publish(msg);
+
 
     if (success) {
       result_.result = uptime;
@@ -73,12 +75,13 @@ private :
 
   ros::NodeHandle n_;
 
-  ros::Publisher pub_;
   actionlib::SimpleActionServer<thorvald_sprayer::WateringAction> as_;
   thorvald_sprayer::WateringFeedback feedback_;
   thorvald_sprayer::WateringResult result_;
   string action_name_;
-  std_msgs::Int8 task_msg;
+  ros::Publisher pub_;
+  std_msgs::Int8 msg;
+
 };
 
 
@@ -88,14 +91,10 @@ int main(int argc, char **argv)  {
 
   WateringAction watering("watering");
 
-  /*Sleep at a rate of 10Hz*/
-  ros::Rate loop_rate(10);
-
   watering.getPublisher().publish(watering.getMsg());
 
-  ros::spinOnce();
-
-  loop_rate.sleep();
+  ros::MultiThreadedSpinner spinner(0);
+  spinner.spin();
 
   return 0;
 }
