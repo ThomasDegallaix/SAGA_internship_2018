@@ -22,7 +22,7 @@ int main (int argc, char **argv) {
   ROS_INFO("Action server started, sending goal.");
   thorvald_sprayer::WateringGoal goal;
 
-  double flow_sec = (double)OPEN_FLOW/3600.0; //We need to have the flow in L/s A RECALCULER SANS LES ROBINETS
+  double flow_sec = (double)OPEN_FLOW/3600.0; //We need to have the flow in L/s
   double watering_duration = VOLUME/flow_sec;
 
   ROS_INFO("The watering task will last for %0.2f s", watering_duration);
@@ -31,7 +31,7 @@ int main (int argc, char **argv) {
   ac.sendGoal(goal);
 
   /*Wait until result or timeout*/
-  bool finished_before_timeout = ac.waitForResult(ros::Duration(30.0));
+  bool finished_before_timeout = ac.waitForResult(ros::Duration(watering_duration + 15.0));
 
   if (finished_before_timeout) {
     actionlib::SimpleClientGoalState state = ac.getState();

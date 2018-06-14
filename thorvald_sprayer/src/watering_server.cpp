@@ -2,6 +2,7 @@
 #include <actionlib/server/simple_action_server.h>
 #include <thorvald_sprayer/WateringAction.h>
 #include <std_msgs/Int8.h>
+#include <iostream>
 
 using namespace std;
 
@@ -51,15 +52,15 @@ public :
 
       uptime = ( clock() - start ) / (double) CLOCKS_PER_SEC;
       //ROS_INFO("Uptime %lf", uptime);
-      //feedback_.performing_task =  ((int)uptime*100)/watering_duration; //Doesn't work properly, needs some adjustments
-      //as_.publishFeedback(feedback_);
+      feedback_.progress =  ((int)uptime*100)/watering_duration;
+      cout<<feedback_.progress<<endl;
+      as_.publishFeedback(feedback_);
       msg.data = 1;
       pub_.publish(msg);
     }
 
     msg.data = 0;
     pub_.publish(msg);
-
 
     if (success) {
       result_.result = uptime;

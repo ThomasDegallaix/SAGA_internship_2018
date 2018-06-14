@@ -5,4 +5,4 @@ float64 duration_
 uint32 result
 ---
 #feedback
-uint32 performing_task
+uint32 progress
