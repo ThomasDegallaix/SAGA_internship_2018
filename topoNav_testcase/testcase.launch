@@ -1,7 +1,11 @@
 <launch>
 
   <arg name="record_data" default="true" />
+
+  <!-- "1" = robot go straight in a row, "2" = round trip, "3" = robot navigate through all the rows -->
   <arg name="task" default="3" />
+
+  <!-- For tasks 1 and 2 only, refers to the index of the row you want to use -->
   <arg name="rowNumber" default="1" />
 
 

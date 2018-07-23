@@ -82,7 +82,7 @@ class topol_nav_client:
 
             navigator.goToWayPoint(waypoint)
 
-    #The robot goes in all the rows
+    #The robot navigates in all the rows
     def navigate(self):
 
         for i in range(len(ROWS)):
@@ -116,11 +116,11 @@ if __name__ == '__main__':
 
 
     if rospy.get_param('/testcases/task') not in range (1,4) or rospy.get_param('/testcases/rowNumber') > len(ROWS):
-        print 'Usage: [1] task : (1) goStraight / (2) roundTrip / (3) navigate through all rows \n [2] indice of the row for task 1 and 2 (from 0 to %d)' %(len(ROWS)-1)
+        print 'Usage: [1] task : (1) goStraight / (2) roundTrip / (3) navigate through all rows \n [2] index of the row for task 1 and 2 (from 0 to %d)' %(len(ROWS)-1)
         sys.exit(2)
 
     """if len(sys.argv) < 3 or int(sys.argv[1]) > 3 or int(sys.argv[1]) < 1 or int(sys.argv[2]) > len(ROWS):
-        print 'Usage: [1] task : (1) goStraight / (2) roundTrip / (3) navigate through all rows \n [2] indice of the row for task 1 and 2 (from 0 to %d)' %(len(ROWS)-1)
+        print 'Usage: [1] task : (1) goStraight / (2) roundTrip / (3) navigate through all rows \n [2] index of the row for task 1 and 2 (from 0 to %d)' %(len(ROWS)-1)
         sys.exit(2)"""
 
     navigator = topol_nav_client()
