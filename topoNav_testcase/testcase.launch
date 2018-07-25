@@ -15,7 +15,7 @@
   </node>
 
   <node pkg="rosbag" type="record" name="rosbag_record_topoNav"
-       args="record -o $(find rasberry_navigation)/bags/ /odom /scan /tf /robot_pose -e /topological_(.*)/(.*)"
+       args="record -o $(find rasberry_navigation)/topoNav_testcase/bags/ /odom /scan /tf /robot_pose -e /topological_(.*)/(.*)"
        if="$(arg record_data)" />
 
 </launch>
