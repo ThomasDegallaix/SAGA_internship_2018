@@ -1,26 +1,32 @@
 #! /usr/bin/env python
 import sys
+import math
 import rospy
 # Brings in the SimpleActionClient
 import actionlib
 import topological_navigation.msg
+from nav_msgs.msg import Odometry
 
 node_name = "topoNav_testcase"
 
 #Each line of this matrix represents a row in the greenhouse, each element of a line represents a waypoint
 #Matrix for Riseholme tmap
-"""ROWS = [['WayPoint8','WayPoint20','WayPoint36','WayPoint37','WayPoint38','WayPoint39'],
+ROWS = [['WayPoint8','WayPoint20','WayPoint36','WayPoint37','WayPoint38','WayPoint39'],
         ['WayPoint7','WayPoint21','WayPoint31','WayPoint34','WayPoint32','WayPoint35'],
         ['WayPoint6','WayPoint22','WayPoint29','WayPoint30','WayPoint33','WayPoint28'],
         ['WayPoint5','WayPoint25','Waypoint23','WayPoint27','WayPoint24','WayPoint26'],
         ['WayPoint1','WayPoint41','Waypoint42','WayPoint43','WayPoint44','WayPoint45'],
         ['WayPoint2','WayPoint47','Waypoint48','WayPoint49','WayPoint50','WayPoint59'],
         ['WayPoint3','WayPoint46','Waypoint51','WayPoint52','WayPoint53','WayPoint58'],
-        ['WayPoint4','WayPoint40','Waypoint54','WayPoint56','WayPoint55','WayPoint57']]"""
+        ['WayPoint4','WayPoint40','Waypoint54','WayPoint56','WayPoint55','WayPoint57']]
 #Matrix for Norway's polytunnel tmap
-ROWS = [['WayPoint1','WayPoint15','WayPoint2','WayPoint18','WayPoint3','WayPoint21','WayPoint4'],
+"""ROWS = [['WayPoint1','WayPoint15','WayPoint2','WayPoint18','WayPoint3','WayPoint21','WayPoint4'],
         ['WayPoint8','WayPoint14','WayPoint7','WayPoint17','WayPoint6','WayPoint20','WayPoint5'],
-        ['WayPoint9','WayPoint13','WayPoint10','WayPoint16','WayPoint11','WayPoint19','WayPoint12']]
+        ['WayPoint9','WayPoint13','WayPoint10','WayPoint16','WayPoint11','WayPoint19','WayPoint12']]"""
+#Entry waypoint and end of row waypoint
+"""ROWS = [['WayPoint1','WayPoint4'],
+        ['WayPoint8','WayPoint5'],
+        ['WayPoint9','WayPoint12']]"""
 
 
 
@@ -36,6 +42,14 @@ class topol_nav_client:
 
         self.client.wait_for_server()
         rospy.loginfo(" ... Init done")
+
+        rospy.Subscriber("/odometry/base_raw", Odometry, self.distance_traveled)
+
+        self.distance_traveled = 0
+        self.speed1 = 0
+        self.time1 = rospy.get_time()
+
+
 
     def goToWayPoint(self, waypoint):
 
@@ -65,6 +79,7 @@ class topol_nav_client:
         for waypoint in waypoint_list:
 
             navigator.goToWayPoint(waypoint)
+
 
 
     #The robot goes forward and when it reached the end of the row it goes back
@@ -108,6 +123,25 @@ class topol_nav_client:
         print 'Endpoint reached'
 
 
+    #Calculate the distance traveled by the robot
+    def distance_traveled(self, data):
+
+
+        time2 = rospy.get_time()
+        dtime = time2 - self.time1
+        speedx = data.twist.twist.linear.x
+        speedy = data.twist.twist.linear.y
+        speed2 = math.sqrt(speedx**2 + speedy**2)
+
+        self.distance_traveled += min(self.speed1,speed2)*dtime + (abs(speed2-self.speed1)*dtime)/2
+
+        print "Distance traveled (m): %.2f            \r" %(self.distance_traveled),
+
+        self.time1 = time2
+        self.speed1 = speed2
+
+
+
 
     def _on_node_shutdown(self):
         self.client.cancel_all_goals()
@@ -116,7 +150,7 @@ class topol_nav_client:
 if __name__ == '__main__':
 
 
-    if rospy.get_param('/testcases/task') not in range (1,4) or rospy.get_param('/testcases/rowNumber') > len(ROWS):
+    if rospy.get_param('/navigation_testcase/task') not in range (1,4) or rospy.get_param('/navigation_testcase/rowNumber') > len(ROWS):
         print 'Usage: [1] task : (1) goStraight / (2) roundTrip / (3) navigate through all rows \n [2] index of the row for task 1 and 2 (from 0 to %d)' %(len(ROWS)-1)
         sys.exit(2)
 
@@ -125,6 +159,7 @@ if __name__ == '__main__':
         sys.exit(2)"""
 
     navigator = topol_nav_client()
+
 
     task = rospy.get_param('/navigation_testcase/task')
     row_index = rospy.get_param('/navigation_testcase/rowNumber')
@@ -140,3 +175,5 @@ if __name__ == '__main__':
     elif task == 3:
 
         navigator.navigate()
+
+    rospy.spin()
